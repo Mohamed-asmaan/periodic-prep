@@ -246,10 +246,39 @@ function loadWelcomeModal(){
 
 }
 
+function loadState() {
+    try {
+        const weak = localStorage.getItem(STORAGE_KEYS.WEAK_ELEMENTS);
+        if (weak) state.weakElements = JSON.parse(weak);
 
+        const last = localStorage.getItem(STORAGE_KEYS.LAST_VIEWED);
+        if (last) state.lastViewed = last;
 
-document.addEventListener('DOMContentLoaded', ()=> {
-    // Run on load - table is built when DOM is ready
-renderElement();
-loginModal();
-} )
+        const hidden = localStorage.getItem(STORAGE_KEYS.STUDY_HIDDEN);
+        if (hidden) state.studyHidden = JSON.parse(hidden);
+
+    } catch (e) {
+        console.warn("State load error:", e);
+    }
+}
+
+function restoreUIState() {
+    // Restore weak styling
+    Object.keys(state.weakElements).forEach(sym => {
+        document.querySelectorAll(`[data-symbol="${sym}"]`)
+            .forEach(c => c.classList.add('weak'));
+    });
+
+    // Restore last viewed
+    if (state.lastViewed) {
+        const el = elements.find(e => e.symbol === state.lastViewed);
+        if (el) handleElementClick(el);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadState();        // 🔥 VERY IMPORTANT
+    renderElement();
+    loginModal();
+    restoreUIState();   // 👇 next step
+});
