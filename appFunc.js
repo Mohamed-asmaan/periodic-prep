@@ -31,7 +31,8 @@ let state = {
     filterMode: 'all', // 'all' | 'weak'
     filterPeriods: [], // [1, 2, 3] or [] for all
     quizScore: 0,
-    quizTotal: 0
+    quizTotal: 0,
+    quizActive: false
 };
 /**
  * Returns element category for CSS styling (IUPAC-style colors).
@@ -110,7 +111,10 @@ function handleElementClick(element) {
         c.classList.remove('highlight'));
     const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
     if (cell) cell.classList.add('highlight');
+    handleCompareSelection(element);
 }
+
+
 
 function saveLastViewed(symbol) {
     try {
@@ -172,7 +176,7 @@ function renderDetailPanel(element) {
 `;
     actions.style.display = 'flex';
     actions.dataset.symbol = element.symbol; // Store for Reveal, Select to
-    Compare
+
     const toggle = content.querySelector('#needsPracticeCheck');
     if (toggle) {
         toggle.addEventListener('change', (e) => {
@@ -275,6 +279,81 @@ function restoreUIState() {
         if (el) handleElementClick(el);
     }
 }
+
+//Quiz part 
+
+function startQuiz() {
+    state.quizScore = 0;
+    state.quizTotal = 0;
+    state.quizActive=true;
+    document.getElementById('quizModal').style.display = 'flex';
+
+    nextQuestion();
+}
+
+function nextQuestion() {
+    if (!state.quizActive) return; // 🔥 IMPORTANT FIX
+    const questionEl = document.getElementById('quizQuestion');
+    const optionsEl = document.getElementById('quizOptions');
+
+    const correct = elements[Math.floor(Math.random() * elements.length)];
+
+    const options = [correct];
+
+    while (options.length < 4) {
+        const rand = elements[Math.floor(Math.random() * elements.length)];
+        if (!options.includes(rand)) options.push(rand);
+    }
+
+    options.sort(() => Math.random() - 0.5);
+
+    questionEl.textContent = `What is the symbol of ${correct.name}?`;
+    optionsEl.innerHTML = '';
+
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt.symbol;
+
+        btn.addEventListener('click', () => {
+            state.quizTotal++;
+
+            if (opt.symbol === correct.symbol) {
+                state.quizScore++;
+            }
+
+            updateQuizScore();
+            nextQuestion();
+        });
+
+        optionsEl.appendChild(btn);
+    });
+}
+
+function updateQuizScore() {
+    document.getElementById('quizScore').textContent = state.quizScore;
+    document.getElementById('quizTotal').textContent = state.quizTotal;
+}
+
+document.getElementById('quizBtn').addEventListener('click', startQuiz);
+function endQuiz() {
+    state.quizActive = false; // 🔥 STOP quiz
+    const questionEl = document.getElementById('quizQuestion');
+    const optionsEl = document.getElementById('quizOptions');
+
+    questionEl.textContent = `Final Score: ${state.quizScore} / ${state.quizTotal}`;
+    optionsEl.innerHTML = `<p>Great job! 🎉</p>`;
+
+    // Reset state AFTER showing result (optional delay)
+    setTimeout(() => {
+        state.quizScore = 0;
+        state.quizTotal = 0;
+
+        document.getElementById('quizModal').style.display = 'none';
+    }, 2000);
+}
+document.getElementById('quizClose').addEventListener('click', endQuiz);
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadState();        // 🔥 VERY IMPORTANT
