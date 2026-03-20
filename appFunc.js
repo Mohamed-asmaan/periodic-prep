@@ -53,7 +53,6 @@ function getElementCategory(el) {
     return 'post-transition';
 }
 
-
 /**
  * Renders the periodic table grid.
  * - Builds lookup map: (xpos, ypos) -> element
@@ -119,6 +118,95 @@ function saveLastViewed(symbol) {
         console.warn('Could not save last viewed:', e);
     }
 }
+/**
+ * Shows a banner if user previously opened an element.
+ * Clicking it reopens the last viewed element.
+ */
+
+function loadContinueBanner() {
+    const banner = document.getElementById('continueBanner');
+    const btn = document.getElementById('continueYes');
+    const dismissBtn=document.getElementById('continueDismiss');
+
+    const last = localStorage.getItem(STORAGE_KEYS.LAST_VIEWED);
+
+    // If no last viewed element → hide banner
+    if (!last) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // Show the banner
+    banner.style.display = 'flex';
+    btn.textContent = `Continue learning: ${last}`;
+
+    dismissBtn.addEventListener('click',()=>
+    {
+        banner.style.display='none';
+        localStorage.removeItem(STORAGE_KEYS.LAST_VIEWED);
+    })
+
+    // Click button → go to element
+    btn.onclick=()=> {
+        const element = elements.find(el => el.symbol === last);
+        if (element) {
+            handleElementClick(element);
+            banner.style.display='none';
+        }
+    };
+
+    // --- Auto-resume last viewed element ---
+    const lastCell = document.querySelector(`[data-symbol="${last}"]`);
+    if (lastCell) {
+        lastCell.classList.add('highlight'); // highlight the cell
+        lastCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const elementData = elements.find(el => el.symbol === last);
+        if (elementData) renderDetailPanel(elementData);
+    }
+} 
+
+// Load weak elements from localStorage when app starts
+function loadWeakElements() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEYS.WEAK_ELEMENTS);
+        if (stored) {
+            state.weakElements = JSON.parse(stored);
+        }
+
+        // Apply weak styling to elements
+        Object.keys(state.weakElements).forEach(sym => {
+            document.querySelectorAll(`[data-symbol="${sym}"]`).forEach(c => {
+                c.classList.add('weak');
+            });
+        });
+        updateProgressUI();
+
+    } catch (e) {
+        console.warn('Could not load weak elements:', e);
+    }
+}
+// Updates progress bar based on weak elements count
+function updateProgressUI() {
+    const progressBar = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    const total = elements.length;
+    const weakCount = Object.keys(state.weakElements).length;
+
+    console.log("Total elements:",total,"Weak elements:",weakCount);
+
+    const learned = total - weakCount;
+    const percent = Math.round((learned / total) * 100);
+
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
+    }
+
+    if (progressText) {
+        progressText.textContent = `${percent}% completed`;
+    }
+}
 
 // it fills the right-side panel with the element’s details (name, mass, number, etc.).
 // It also manages the “Needs practice” checkbox and updates weak-element state + UI when toggled.
@@ -171,8 +259,7 @@ function renderDetailPanel(element) {
 </div>
 `;
     actions.style.display = 'flex';
-    actions.dataset.symbol = element.symbol; // Store for Reveal, Select to
-    Compare
+    actions.dataset.symbol = element.symbol; // Store for Reveal, Select to Compare
     const toggle = content.querySelector('#needsPracticeCheck');
     if (toggle) {
         toggle.addEventListener('change', (e) => {
@@ -199,7 +286,6 @@ function saveWeakElements() {
         console.warn('Could not save weak elements:', e);
     }
 }
-
 
 
 function loginModal() {
@@ -247,9 +333,11 @@ function loadWelcomeModal(){
 }
 
 
-
 document.addEventListener('DOMContentLoaded', ()=> {
     // Run on load - table is built when DOM is ready
 renderElement();
 loginModal();
+loadWeakElements();
+updateProgressUI();
+loadContinueBanner();
 } )
