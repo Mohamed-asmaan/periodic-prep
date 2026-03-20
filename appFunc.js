@@ -235,21 +235,21 @@ function loginModal() {
 }
 
 
-function loadWelcomeModal(){
+function loadWelcomeModal() {
     const welcome = document.getElementById('welcomeModal');
     const start = document.getElementById('welcomeClose');
-    welcome.style.display="flex"
+    welcome.style.display = "flex"
 
-    start.addEventListener('click', ()=> {
-        welcome.style.display="none"
+    start.addEventListener('click', () => {
+        welcome.style.display = "none"
     })
 
 }
 
 
 
-document.addEventListener('DOMContentLoaded', ()=> {
+document.addEventListener('DOMContentLoaded', () => {
     // Run on load - table is built when DOM is ready
-renderElement();
-loginModal();
-} )
+    renderElement();
+    loginModal();
+})
