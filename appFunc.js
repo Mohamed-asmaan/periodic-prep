@@ -110,7 +110,7 @@ function handleElementClick(element) {
         c.classList.remove('highlight'));
     const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
     if (cell) cell.classList.add('highlight');
-    handleCompareSelection(element);
+    
 }
 
 
@@ -278,8 +278,104 @@ function renderDetailPanel(element) {
                 c.classList.toggle('weak', e.target.checked));
         });
     }
+    const compareBtn = document.getElementById('compareSelectBtn');
+
+    if (compareBtn) {
+        compareBtn.onclick = () => {
+            handleCompareSelection(element);
+        };
+    }
 }
 
+function handleCompareSelection(element) {
+    const sym = element.symbol;
+
+    // Prevent duplicate selection
+    if (state.compareSelection.includes(sym)) return;
+
+    // Allow only 2 elements
+    if (state.compareSelection.length >= 2) {
+        state.compareSelection.shift(); // remove oldest
+    }
+
+    state.compareSelection.push(sym);
+
+    renderComparison();
+}
+
+function renderComparison() {
+    const panel = document.getElementById('comparisonPanel');
+    const table = document.getElementById('comparisonTable');
+    const hint = document.getElementById('comparisonHint');
+
+    if (state.compareSelection.length < 2) {
+        panel.style.display = 'block';
+        hint.textContent = "Select 2 elements to compare";
+        table.innerHTML = "";
+        return;
+    }
+
+    const el1 = elements.find(e => e.symbol === state.compareSelection[0]);
+    const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
+
+    panel.style.display = 'block';
+    hint.textContent = "";
+
+    table.innerHTML = `
+        <table>
+            <tr>
+                <th>Property</th>
+                <th>${el1.symbol}</th>
+                <th>${el2.symbol}</th>
+            </tr>
+            <tr>
+                <td>Name</td>
+                <td>${el1.name}</td>
+                <td>${el2.name}</td>
+            </tr>
+            <tr>
+                <td>Atomic Number</td>
+                <td>${el1.atomicNumber}</td>
+                <td>${el2.atomicNumber}</td>
+            </tr>
+            <tr>
+                <td>Atomic Mass</td>
+                <td>${el1.atomicMass}</td>
+                <td>${el2.atomicMass}</td>
+            </tr>
+            <tr>
+                <td>Group</td>
+                <td>${el1.group}</td>
+                <td>${el2.group}</td>
+            </tr>
+            <tr>
+                <td>Period</td>
+                <td>${el1.period}</td>
+                <td>${el2.period}</td>
+            </tr>
+            <tr>
+                <td>Electron Config</td>
+                <td>${el1.electronConfiguration}</td>
+                <td>${el2.electronConfiguration}</td>
+            </tr>
+        </table>
+    `;
+}
+
+document.getElementById('clearComparison').addEventListener('click', () => {
+    state.compareSelection = [];
+    document.getElementById('comparisonTable').innerHTML = "";
+    document.getElementById('comparisonHint').textContent =
+        "1. Click an element → 2. Select to Compare → 3. Repeat";
+});
+
+document.getElementById('closeComparison').addEventListener('click', () => {
+    document.getElementById('comparisonPanel').style.display = 'none';
+});
+
+document.getElementById('compareBtn').addEventListener('click', () => {
+    document.getElementById('comparisonPanel').style.display = 'block';
+});
 
 function saveWeakElements() {
     try {
