@@ -61,20 +61,23 @@ function getElementCategory(el) {
  * - Empty cells: visibility hidden (keeps grid alignment)
  * - Cells get: element-cell, cat-{category}, data-symbol for search/filter
  */
-
 function renderElement() {
-    // periodicTableGrid.innerHTML = ''
-    // const elementsToShow = getFilteredElements();
-    // if (elementsToShow.length === 0) {
-    //     const msg = state.filterMode === 'weak'
-    //         ? 'No elements need practice. Toggle "Needs practice" on any element to add it here.'
-    //         : 'No elements match the period filter.';
-    //     periodicTableGrid.innerHTML = `<p class="empty-message">${msg}</p>`;
-    //     return;
-    // }
+    periodicTableGrid.innerHTML = '';
+
+    const elementsToShow = getFilteredElements();
+
+    if (elementsToShow.length === 0) {
+        const msg = state.filterMode === 'weak'
+            ? 'No elements need practice.'
+            : 'No elements match the period filter.';
+        periodicTableGrid.innerHTML = `<p>${msg}</p>`;
+        return;
+    }
+
     const grid = {};
 
-    elements.forEach(el => {
+    //  USE FILTERED DATA
+    elementsToShow.forEach(el => {
         let keyName = `${el.xpos}-${el.ypos}`;
         grid[keyName] = el;
     });
@@ -89,33 +92,30 @@ function renderElement() {
             cell.dataset.symbol = element ? element.symbol : '';
 
             if (element) {
-
                 const category = getElementCategory(element);
                 cell.className = `element-cell cat-${category}`;
                 cell.innerHTML = `
-                <span class="element-symbol">${element.symbol}</span>
-                <span class="element-number">${element.atomicNumber}</span>
+               <span class="element-symbol">${element.symbol}</span>
+               <span class="element-number">${element.atomicNumber}</span>
             `;
-
                 cell.addEventListener('click', () => {
                     handleElementClick(element);
                 });
-                cell.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleElementClick(element);
-                    }
-                });
 
 
+                cell.style.gridColumn = j;
+                cell.style.gridRow = i;
             } else {
-                cell.style.visibility = "hidden"; // Empty grid positions
+                cell.style.visibility = "hidden";
+                cell.style.gridColumn = j;
+                cell.style.gridRow = i;
             }
 
             periodicTableGrid.appendChild(cell);
         }
     }
 }
+
 
 
 // element was clicked and updates the detail panel.
@@ -516,6 +516,41 @@ function setupSearch() {
         });
     });
 }
+// Applies All/Weak and period filters before rendering
+function getFilteredElements() {
+    let elements = ELEMENTS;
+    if (state.filterMode === 'weak') {
+        elements = elements.filter(el => state.weakElements[el.symbol] ===
+            'weak');
+    }
+    if (state.filterPeriods.length > 0) {
+        elements = elements.filter(el =>
+            state.filterPeriods.includes(el.period));
+    }
+    return elements;
+}
+
+function setupFilters() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const periodCheckboxes = document.querySelectorAll('.period-filter');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.filterMode = btn.dataset.filter;
+            renderElement();
+        });
+    });
+    periodCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+
+            state.filterPeriods = Array.from(document.querySelectorAll('.period-filter:checked'))
+
+                .map(c => parseInt(c.value, 10));
+            renderElement();
+        });
+    });
+}
 
 function restoreUIState() {
     // Restore weak styling
@@ -674,6 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginModal();
     loadWeakElements();
     setupSearch();
+    setupFilters();
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
