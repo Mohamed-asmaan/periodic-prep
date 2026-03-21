@@ -11,7 +11,7 @@
 let elements = ELEMENTS;
 let periodicTableGrid = document.getElementById('periodicTable');
 
-
+//object used to store constant keys
 const STORAGE_KEYS = {
     PROFILE: 'chemistryRevision_profile',
     WELCOME_SEEN: 'chemistryRevision_welcomeSeen',
@@ -61,7 +61,17 @@ function getElementCategory(el) {
  * - Empty cells: visibility hidden (keeps grid alignment)
  * - Cells get: element-cell, cat-{category}, data-symbol for search/filter
  */
+
 function renderElement() {
+    // periodicTableGrid.innerHTML = ''
+    // const elementsToShow = getFilteredElements();
+    // if (elementsToShow.length === 0) {
+    //     const msg = state.filterMode === 'weak'
+    //         ? 'No elements need practice. Toggle "Needs practice" on any element to add it here.'
+    //         : 'No elements match the period filter.';
+    //     periodicTableGrid.innerHTML = `<p class="empty-message">${msg}</p>`;
+    //     return;
+    // }
     const grid = {};
 
     elements.forEach(el => {
@@ -79,16 +89,24 @@ function renderElement() {
             cell.dataset.symbol = element ? element.symbol : '';
 
             if (element) {
+
                 const category = getElementCategory(element);
                 cell.className = `element-cell cat-${category}`;
                 cell.innerHTML = `
                 <span class="element-symbol">${element.symbol}</span>
                 <span class="element-number">${element.atomicNumber}</span>
             `;
-                //by krithika
+
                 cell.addEventListener('click', () => {
                     handleElementClick(element);
                 });
+                cell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleElementClick(element);
+                    }
+                });
+
 
             } else {
                 cell.style.visibility = "hidden"; // Empty grid positions
@@ -98,6 +116,7 @@ function renderElement() {
         }
     }
 }
+
 
 // element was clicked and updates the detail panel.
 // It also removes highlight from all cells and highlights only the clicked one.
@@ -446,6 +465,57 @@ function loadState() {
         console.warn("State load error:", e);
     }
 }
+function setupSearch() {
+    const input = document.getElementById('searchInput');
+
+    input.addEventListener('input', () => {
+        const query = input.value.toLowerCase().trim();
+
+        const cells = document.querySelectorAll('.element-cell');
+
+        // Reset if empty
+        if (query === '') {
+            cells.forEach(cell => {
+                cell.classList.remove('highlight');
+                cell.classList.remove('hidden');
+            });
+            return;
+        }
+
+        // Filter matching elements
+        const matches = ELEMENTS.filter(el =>
+            el.name.toLowerCase().includes(query) ||
+            el.symbol.toLowerCase().includes(query) ||
+            el.atomicNumber.toString().includes(query)
+        );
+
+
+        cells.forEach(cell => {
+            const symbol = cell.dataset.symbol;
+
+            let isMatch = false;
+
+
+            for (let i = 0; i < matches.length; i++) {
+                if (matches[i].symbol === symbol) {
+                    isMatch = true;
+                    break; // stop loop once found
+                }
+            }
+
+            if (isMatch) {
+                cell.classList.add('highlight');
+                cell.classList.remove('hidden');
+            } else {
+                cell.classList.remove('highlight');
+
+                if (query.length >= 2) {
+                    cell.classList.add('hidden');
+                }
+            }
+        });
+    });
+}
 
 function restoreUIState() {
     // Restore weak styling
@@ -543,6 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderElement();
     loginModal();
     loadWeakElements();
+    setupSearch();
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
