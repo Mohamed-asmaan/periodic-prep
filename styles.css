@@ -1471,3 +1471,248 @@ body {
   }
 }
 
+/* ============================================
+   🔥 UI UPGRADE PATCH (ADD-ON)
+   ============================================ */
+
+/* ---------- GLOBAL ANIMATION ---------- */
+.main {
+  animation: fadeUp 0.5s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- ELEMENT CELL UPGRADE ---------- */
+.element-cell {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+/* Shine effect */
+.element-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.element-cell:hover::after {
+  opacity: 1;
+}
+
+/* Better hover feel */
+.element-cell:hover {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Pulse highlight */
+.element-cell.highlight {
+  animation: pulseGlow 1s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  from { transform: scale(1); }
+  to { transform: scale(1.12); }
+}
+
+/* ---------- QUIZ UI UPGRADE ---------- */
+.quiz-option {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* Shine hover */
+.quiz-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.25),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.quiz-option:hover::before {
+  opacity: 1;
+}
+
+/* Click animation */
+.quiz-option:active {
+  transform: scale(0.95);
+}
+
+/* Correct animation */
+.quiz-option.correct {
+  animation: correctFlash 0.4s ease;
+}
+
+/* Wrong animation */
+.quiz-option.wrong {
+  animation: wrongFlash 0.4s ease;
+}
+
+@keyframes correctFlash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes wrongFlash {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+/* ---------- QUIZ CARD ENTRY ---------- */
+.quiz-content {
+  animation: fadeUp 0.35s ease;
+}
+
+/* ---------- COMPARISON PANEL ---------- */
+.comparison-panel {
+  animation: fadeUp 0.4s ease;
+}
+
+/* Hover row interaction */
+.compare-table tbody tr:hover {
+  transform: scale(1.01);
+  transition: 0.2s;
+}
+
+/* Winner highlight (use in JS) */
+.compare-winner {
+  background: var(--color-accent-light) !important;
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+/* ---------- BUTTON FEEDBACK ---------- */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Button shine */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.3),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.btn:hover::after {
+  opacity: 1;
+}
+
+/* ---------- MODAL SMOOTH ENTRY ---------- */
+.modal-content {
+  animation: modalPop 0.3s ease;
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+
+}
+
+#quizOptions button {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#quizOptions button:hover {
+  background: #e0f2fe;
+  transform: translateY(-2px);
+}
+
+#quizOptions button:active {
+  transform: scale(0.97);
+}
+
+
+#quizModal {
+  backdrop-filter: blur(10px);
+}
+
+#quizModal .modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  width: 320px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.correct {
+  background: #22c55e !important;
+  color: white;
+}
+
+.wrong {
+  background: #ef4444 !important;
+  color: white;
+}
+
+#quizOptions button {
+  transition: all 0.2s ease;
+}

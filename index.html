@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <!--
@@ -7,16 +6,21 @@
   This file defines the page layout and all UI sections.
   Script load order: elements-data.js (data) → appFunc.js (table render) → app.js (logic, loaded elsewhere if used)
 -->
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PeriodC:\Users\rajapandian\Desktop\FSD\periodic-prep\periodic-prep\index.htmlic Prep — Interactive periodic table study tool. Master all 118 elements with search, study mode, quizzes, and progress tracking. Built for chemistry students.">
+  <meta name="description"
+    content="PeriodC:\Users\rajapandian\Desktop\FSD\periodic-prep\periodic-prep\index.htmlic Prep — Interactive periodic table study tool. Master all 118 elements with search, study mode, quizzes, and progress tracking. Built for chemistry students.">
   <title>Periodic Prep — Periodic Table Study Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <!-- HEADER: App title + tagline (tagline updates with user name after profile) -->
   <header class="header">
@@ -32,7 +36,8 @@
       <form id="profileForm" class="profile-form" novalidate>
         <div class="form-group">
           <label for="profileName">Name <span class="required">*</span></label>
-          <input type="text" id="profileName" name="name" placeholder="Your name" minlength="2" maxlength="50" required autocomplete="name">
+          <input type="text" id="profileName" name="name" placeholder="Your name" minlength="2" maxlength="50" required
+            autocomplete="name">
           <span class="form-error" id="nameError" role="alert"></span>
         </div>
         <div class="form-group">
@@ -49,7 +54,8 @@
   <div id="welcomeModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <h2>Welcome to Periodic Prep</h2>
-      <p>An interactive periodic table study tool. Search elements, hide properties to test your memory, take quizzes, and track what you need to practice.</p>
+      <p>An interactive periodic table study tool. Search elements, hide properties to test your memory, take quizzes,
+        and track what you need to practice.</p>
       <ul>
         <li><strong>Click</strong> any element to see details</li>
         <li><strong>Search</strong> by name, symbol, or atomic number</li>
@@ -78,8 +84,10 @@
         <div class="search-box">
           <label for="searchInput">Search</label>
           <div class="search-input-row">
-            <input type="text" id="searchInput" placeholder="Name, symbol, or number..." maxlength="50" autocomplete="off">
-            <span class="color-legend-trigger" tabindex="0" title="Element colors by type" aria-label="Color legend - hover or focus to see element type colors">
+            <input type="text" id="searchInput" placeholder="Name, symbol, or number..." maxlength="50"
+              autocomplete="off">
+            <span class="color-legend-trigger" tabindex="0" title="Element colors by type"
+              aria-label="Color legend - hover or focus to see element type colors">
               <span class="color-legend-icon">?</span>
               <span class="color-legend-tooltip">
                 <strong>Colors = element type</strong>
@@ -127,55 +135,58 @@
         </section>
 
         <aside class="sidebar">
-        <div class="sidebar-inner">
-          <div class="progress-section">
+          <div class="progress-container">
             <div class="progress-header">
-              <span>Need practice</span>
-              <span id="progressText">0 elements</span>
+              <span>Progress</span>
+              <span id="progressText">0%</span>
             </div>
+
             <div class="progress-bar">
               <div id="progressFill" class="progress-fill"></div>
             </div>
           </div>
+          <div class="sidebar-inner">
+            
 
-          <div class="action-buttons">
-            <button id="studyModeBtn" class="btn btn-secondary">Study Mode</button>
-            <button id="compareBtn" class="btn btn-secondary">Compare</button>
-            <button id="quizBtn" class="btn btn-primary">Quiz</button>
+            <div class="action-buttons">
+              <button id="studyModeBtn" class="btn btn-secondary">Study Mode</button>
+              <button id="compareBtn" class="btn btn-secondary">Compare</button>
+              <button id="quizBtn" class="btn btn-primary">Quiz</button>
+            </div>
+
+            <!-- DETAIL PANEL: Shows element info when clicked. IDs: detailContent, detailActions, revealBtn, compareSelectBtn -->
+            <section id="detailPanel" class="detail-panel" aria-label="Element details">
+              <h3 class="panel-title">Element Details</h3>
+              <div id="detailContent" class="detail-content">
+                <p class="detail-placeholder">Click an element to view details</p>
+              </div>
+              <div id="detailActions" class="detail-actions" style="display: none;">
+                <button id="revealBtn" class="btn btn-primary">Reveal Answer</button>
+                <button id="compareSelectBtn" class="btn btn-secondary">Select to Compare</button>
+
+              </div>
+            </section>
+
+            <!-- STUDY MODE: Checkboxes to hide properties (atomic number, mass, electron config, group). ID: closeStudyMode -->
+            <section id="studyOptions" class="study-options" style="display: none;">
+              <h3>Hide properties (try to recall)</h3>
+              <div class="study-checkboxes">
+                <label><input type="checkbox" id="hideAtomicNumber"> Atomic Number</label>
+                <label><input type="checkbox" id="hideAtomicMass"> Atomic Mass</label>
+                <label><input type="checkbox" id="hideElectronConfig"> Electron Config</label>
+                <label><input type="checkbox" id="hideGroup"> Group</label>
+              </div>
+              <button id="closeStudyMode" class="btn btn-small">Close Study Mode</button>
+            </section>
           </div>
-
-          <!-- DETAIL PANEL: Shows element info when clicked. IDs: detailContent, detailActions, revealBtn, compareSelectBtn -->
-          <section id="detailPanel" class="detail-panel" aria-label="Element details">
-            <h3 class="panel-title">Element Details</h3>
-            <div id="detailContent" class="detail-content">
-              <p class="detail-placeholder">Click an element to view details</p>
-            </div>
-            <div id="detailActions" class="detail-actions" style="display: none;">
-              <button id="revealBtn" class="btn btn-primary">Reveal Answer</button>
-              <button id="compareSelectBtn" class="btn btn-secondary">Select to Compare</button>
-
-            </div>
-          </section>
-
-          <!-- STUDY MODE: Checkboxes to hide properties (atomic number, mass, electron config, group). ID: closeStudyMode -->
-          <section id="studyOptions" class="study-options" style="display: none;">
-            <h3>Hide properties (try to recall)</h3>
-            <div class="study-checkboxes">
-              <label><input type="checkbox" id="hideAtomicNumber"> Atomic Number</label>
-              <label><input type="checkbox" id="hideAtomicMass"> Atomic Mass</label>
-              <label><input type="checkbox" id="hideElectronConfig"> Electron Config</label>
-              <label><input type="checkbox" id="hideGroup"> Group</label>
-            </div>
-            <button id="closeStudyMode" class="btn btn-small">Close Study Mode</button>
-          </section>
-        </div>
-      </aside>
+        </aside>
       </div>
 
       <!-- COMPARISON PANEL: Side-by-side compare 2 elements. IDs: comparisonTable, clearComparison, closeComparison -->
       <section id="comparisonPanel" class="comparison-panel comparison-fullwidth" style="display: none;">
         <h3>Element Comparison</h3>
-        <p class="comparison-hint" id="comparisonHint">1. Click an element in the table → 2. Click "Select to Compare" below → 3. Repeat for second element</p>
+        <p class="comparison-hint" id="comparisonHint">1. Click an element in the table → 2. Click "Select to Compare"
+          below → 3. Repeat for second element</p>
         <div id="comparisonTable" class="comparison-table"></div>
         <div class="comparison-actions">
           <button id="clearComparison" class="btn btn-small">Clear</button>
@@ -186,6 +197,7 @@
 
     <!-- QUIZ MODAL: Multiple choice quiz. IDs: quizQuestion, quizOptions, quizScore, quizTotal, quizClose -->
     <div id="quizModal" class="modal" aria-hidden="true">
+
       <div class="modal-content quiz-content">
         <h2>Quiz Mode</h2>
         <p id="quizQuestion" class="quiz-question"></p>
@@ -199,7 +211,8 @@
   </main>
 
   <footer class="footer">
-    <p class="footer-text"><strong>Periodic Prep</strong> — Interactive periodic table study tool. Master all 118 elements with search, study mode, quizzes, and progress tracking.</p>
+    <p class="footer-text"><strong>Periodic Prep</strong> — Interactive periodic table study tool. Master all 118
+      elements with search, study mode, quizzes, and progress tracking.</p>
     <p class="footer-copy">&copy; <span id="footerYear"></span> Periodic Prep. All rights reserved.</p>
   </footer>
 
@@ -208,4 +221,5 @@
   <script src="./appFunc.js"></script>
 
 </body>
+
 </html>

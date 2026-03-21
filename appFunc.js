@@ -129,7 +129,7 @@ function handleElementClick(element) {
         c.classList.remove('highlight'));
     const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
     if (cell) cell.classList.add('highlight');
-    
+
 }
 
 
@@ -541,43 +541,101 @@ function startQuiz() {
 
     nextQuestion();
 }
-
+const QUIZ_LIMIT = 5;
 function nextQuestion() {
-    if (!state.quizActive) return; // 🔥 IMPORTANT FIX
+    if (!state.quizActive) return;
+
+    if (state.quizTotal >= QUIZ_LIMIT) {
+        endQuiz();
+        return;
+    }
+
     const questionEl = document.getElementById('quizQuestion');
     const optionsEl = document.getElementById('quizOptions');
 
-    const correct = elements[Math.floor(Math.random() * elements.length)];
+    const q = generateQuestion();
 
-    const options = [correct];
+    state.currentQuestion = q;
 
-    while (options.length < 4) {
-        const rand = elements[Math.floor(Math.random() * elements.length)];
-        if (!options.includes(rand)) options.push(rand);
-    }
-
-    options.sort(() => Math.random() - 0.5);
-
-    questionEl.textContent = `What is the symbol of ${correct.name}?`;
+    questionEl.textContent = q.question;
     optionsEl.innerHTML = '';
 
-    options.forEach(opt => {
+    q.options.forEach(opt => {
         const btn = document.createElement('button');
-        btn.textContent = opt.symbol;
+        btn.textContent = opt;
 
-        btn.addEventListener('click', () => {
-            state.quizTotal++;
-
-            if (opt.symbol === correct.symbol) {
-                state.quizScore++;
-            }
-
-            updateQuizScore();
-            nextQuestion();
-        });
+        btn.onclick = () => handleAnswer(opt, btn);
 
         optionsEl.appendChild(btn);
     });
+}
+
+function generateQuestion() {
+    const el = elements[Math.floor(Math.random() * elements.length)];
+    const type = Math.floor(Math.random() * 3);
+
+    let question = '';
+    let answer = '';
+    let options = [];
+
+    if (type === 0) {
+        question = `What is the symbol of ${el.name}?`;
+        answer = el.symbol;
+        options = elements.map(e => e.symbol);
+    }
+
+    else if (type === 1) {
+        question = `What is the atomic number of ${el.name}?`;
+        answer = el.atomicNumber.toString();
+        options = elements.map(e => e.atomicNumber.toString());
+    }
+
+    else {
+        question = `Which element has symbol ${el.symbol}?`;
+        answer = el.name;
+        options = elements.map(e => e.name);
+    }
+
+    // Pick 3 wrong + 1 correct
+    let finalOptions = [answer];
+
+    while (finalOptions.length < 4) {
+        const rand = options[Math.floor(Math.random() * options.length)];
+        if (!finalOptions.includes(rand)) {
+            finalOptions.push(rand);
+        }
+    }
+
+    finalOptions.sort(() => Math.random() - 0.5);
+
+    return { question, answer, options: finalOptions };
+}
+function handleAnswer(selected, btn) {
+    const correct = state.currentQuestion.answer;
+
+    state.quizTotal++;
+
+    if (selected === correct) {
+        state.quizScore++;
+    }
+
+    const buttons = document.querySelectorAll('#quizOptions button');
+
+    buttons.forEach(b => {
+    b.disabled = true;
+
+    if (b.textContent === correct) {
+        b.classList.add('correct');
+    } else if (b === btn) {
+        b.classList.add('wrong');
+    }
+});
+
+    updateQuizScore();
+
+    setTimeout(() => {
+        nextQuestion();
+    }, 1000);
 }
 
 function updateQuizScore() {
@@ -587,23 +645,25 @@ function updateQuizScore() {
 
 document.getElementById('quizBtn').addEventListener('click', startQuiz);
 function endQuiz() {
-    state.quizActive = false; // 🔥 STOP quiz
+    state.quizActive = false;
+
     const questionEl = document.getElementById('quizQuestion');
     const optionsEl = document.getElementById('quizOptions');
 
     questionEl.textContent = `Final Score: ${state.quizScore} / ${state.quizTotal}`;
-    optionsEl.innerHTML = `<p>Great job! 🎉</p>`;
+    optionsEl.innerHTML = `<p>Click "End Quiz" again to close</p>`;
+}
+document.getElementById('quizClose').addEventListener('click', () => {
+    if (!state.quizActive) {
+        document.getElementById('quizModal').style.display = 'none';
 
-    // Reset state AFTER showing result (optional delay)
-    setTimeout(() => {
+        // reset AFTER closing
         state.quizScore = 0;
         state.quizTotal = 0;
-
-        document.getElementById('quizModal').style.display = 'none';
-    }, 2000);
-}
-document.getElementById('quizClose').addEventListener('click', endQuiz);
-
+    } else {
+        endQuiz();
+    }
+});
 
 
 
