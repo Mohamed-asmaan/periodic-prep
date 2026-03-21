@@ -31,7 +31,8 @@ let state = {
     filterMode: 'all', // 'all' | 'weak'
     filterPeriods: [], // [1, 2, 3] or [] for all
     quizScore: 0,
-    quizTotal: 0
+    quizTotal: 0,
+    quizActive: false
 };
 /**
  * Returns element category for CSS styling (IUPAC-style colors).
@@ -52,7 +53,6 @@ function getElementCategory(el) {
     if (g >= 13 && g <= 16) return 'post-transition';
     return 'post-transition';
 }
-
 
 /**
  * Renders the periodic table grid.
@@ -129,13 +129,104 @@ function handleElementClick(element) {
         c.classList.remove('highlight'));
     const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
     if (cell) cell.classList.add('highlight');
+    handleCompareSelection(element);
 }
+
+
 
 function saveLastViewed(symbol) {
     try {
         localStorage.setItem(STORAGE_KEYS.LAST_VIEWED, symbol);
     } catch (e) {
         console.warn('Could not save last viewed:', e);
+    }
+}
+/**
+ * Shows a banner if user previously opened an element.
+ * Clicking it reopens the last viewed element.
+ */
+
+function loadContinueBanner() {
+    const banner = document.getElementById('continueBanner');
+    const btn = document.getElementById('continueYes');
+    const dismissBtn = document.getElementById('continueDismiss');
+
+    const last = localStorage.getItem(STORAGE_KEYS.LAST_VIEWED);
+
+    // If no last viewed element → hide banner
+    if (!last) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // Show the banner
+    banner.style.display = 'flex';
+    btn.textContent = `Continue learning: ${last}`;
+
+    dismissBtn.addEventListener('click', () => {
+        banner.style.display = 'none';
+        localStorage.removeItem(STORAGE_KEYS.LAST_VIEWED);
+    })
+
+    // Click button → go to element
+    btn.onclick = () => {
+        const element = elements.find(el => el.symbol === last);
+        if (element) {
+            handleElementClick(element);
+            banner.style.display = 'none';
+        }
+    };
+
+    // --- Auto-resume last viewed element ---
+    const lastCell = document.querySelector(`[data-symbol="${last}"]`);
+    if (lastCell) {
+        lastCell.classList.add('highlight'); // highlight the cell
+        lastCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const elementData = elements.find(el => el.symbol === last);
+        if (elementData) renderDetailPanel(elementData);
+    }
+}
+
+// Load weak elements from localStorage when app starts
+function loadWeakElements() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEYS.WEAK_ELEMENTS);
+        if (stored) {
+            state.weakElements = JSON.parse(stored);
+        }
+
+        // Apply weak styling to elements
+        Object.keys(state.weakElements).forEach(sym => {
+            document.querySelectorAll(`[data-symbol="${sym}"]`).forEach(c => {
+                c.classList.add('weak');
+            });
+        });
+        updateProgressUI();
+
+    } catch (e) {
+        console.warn('Could not load weak elements:', e);
+    }
+}
+// Updates progress bar based on weak elements count
+function updateProgressUI() {
+    const progressBar = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    const total = elements.length;
+    const weakCount = Object.keys(state.weakElements).length;
+
+    console.log("Total elements:", total, "Weak elements:", weakCount);
+
+    const learned = total - weakCount;
+    const percent = Math.round((learned / total) * 100);
+
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
+    }
+
+    if (progressText) {
+        progressText.textContent = `${percent}% completed`;
     }
 }
 
@@ -219,7 +310,6 @@ function saveWeakElements() {
 }
 
 
-
 function loginModal() {
     const profileModal = document.getElementById("profileModal");
     const profileForm = document.getElementById("profileForm");
@@ -263,62 +353,120 @@ function loadWelcomeModal() {
     })
 
 }
-function setupSearch() {
-    const input = document.getElementById('searchInput');
 
-    input.addEventListener('input', () => {
-        const query = input.value.toLowerCase().trim();
+function loadState() {
+    try {
+        const weak = localStorage.getItem(STORAGE_KEYS.WEAK_ELEMENTS);
+        if (weak) state.weakElements = JSON.parse(weak);
 
-        const cells = document.querySelectorAll('.element-cell');
+        const last = localStorage.getItem(STORAGE_KEYS.LAST_VIEWED);
+        if (last) state.lastViewed = last;
 
-        // Reset if empty
-        if (query === '') {
-            cells.forEach(cell => {
-                cell.classList.remove('highlight');
-                cell.classList.remove('hidden');
-            });
-            return;
-        }
+        const hidden = localStorage.getItem(STORAGE_KEYS.STUDY_HIDDEN);
+        if (hidden) state.studyHidden = JSON.parse(hidden);
 
-        // Filter matching elements
-        const matches = ELEMENTS.filter(el =>
-            el.name.toLowerCase().includes(query) ||
-            el.symbol.toLowerCase().includes(query) ||
-            el.atomicNumber.toString().includes(query)
-        );
+    } catch (e) {
+        console.warn("State load error:", e);
+    }
+}
 
+function restoreUIState() {
+    // Restore weak styling
+    Object.keys(state.weakElements).forEach(sym => {
+        document.querySelectorAll(`[data-symbol="${sym}"]`)
+            .forEach(c => c.classList.add('weak'));
+    });
 
-        cells.forEach(cell => {
-            const symbol = cell.dataset.symbol;
+    // Restore last viewed
+    if (state.lastViewed) {
+        const el = elements.find(e => e.symbol === state.lastViewed);
+        if (el) handleElementClick(el);
+    }
+}
 
-            let isMatch = false;
+//Quiz part 
 
+function startQuiz() {
+    state.quizScore = 0;
+    state.quizTotal = 0;
+    state.quizActive = true;
+    document.getElementById('quizModal').style.display = 'flex';
 
-            for (let i = 0; i < matches.length; i++) {
-                if (matches[i].symbol === symbol) {
-                    isMatch = true;
-                    break; // stop loop once found
-                }
+    nextQuestion();
+}
+
+function nextQuestion() {
+    if (!state.quizActive) return; // 🔥 IMPORTANT FIX
+    const questionEl = document.getElementById('quizQuestion');
+    const optionsEl = document.getElementById('quizOptions');
+
+    const correct = elements[Math.floor(Math.random() * elements.length)];
+
+    const options = [correct];
+
+    while (options.length < 4) {
+        const rand = elements[Math.floor(Math.random() * elements.length)];
+        if (!options.includes(rand)) options.push(rand);
+    }
+
+    options.sort(() => Math.random() - 0.5);
+
+    questionEl.textContent = `What is the symbol of ${correct.name}?`;
+    optionsEl.innerHTML = '';
+
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt.symbol;
+
+        btn.addEventListener('click', () => {
+            state.quizTotal++;
+
+            if (opt.symbol === correct.symbol) {
+                state.quizScore++;
             }
 
-            if (isMatch) {
-                cell.classList.add('highlight');
-                cell.classList.remove('hidden');
-            } else {
-                cell.classList.remove('highlight');
-
-                if (query.length >= 2) {
-                    cell.classList.add('hidden');
-                }
-            }
+            updateQuizScore();
+            nextQuestion();
         });
+
+        optionsEl.appendChild(btn);
     });
 }
 
+function updateQuizScore() {
+    document.getElementById('quizScore').textContent = state.quizScore;
+    document.getElementById('quizTotal').textContent = state.quizTotal;
+}
+
+document.getElementById('quizBtn').addEventListener('click', startQuiz);
+function endQuiz() {
+    state.quizActive = false; // 🔥 STOP quiz
+    const questionEl = document.getElementById('quizQuestion');
+    const optionsEl = document.getElementById('quizOptions');
+
+    questionEl.textContent = `Final Score: ${state.quizScore} / ${state.quizTotal}`;
+    optionsEl.innerHTML = `<p>Great job! 🎉</p>`;
+
+    // Reset state AFTER showing result (optional delay)
+    setTimeout(() => {
+        state.quizScore = 0;
+        state.quizTotal = 0;
+
+        document.getElementById('quizModal').style.display = 'none';
+    }, 2000);
+}
+document.getElementById('quizClose').addEventListener('click', endQuiz);
+
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // Run on load - table is built when DOM is ready
+    loadState();
     renderElement();
     loginModal();
-    setupSearch();
-    
+    loadWeakElements();
+    updateProgressUI();
+    loadContinueBanner();
+    restoreUIState();
 })
