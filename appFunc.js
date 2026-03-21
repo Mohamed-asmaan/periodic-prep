@@ -369,6 +369,57 @@ function loadState() {
         console.warn("State load error:", e);
     }
 }
+function setupSearch() {
+    const input = document.getElementById('searchInput');
+
+    input.addEventListener('input', () => {
+        const query = input.value.toLowerCase().trim();
+
+        const cells = document.querySelectorAll('.element-cell');
+
+        // Reset if empty
+        if (query === '') {
+            cells.forEach(cell => {
+                cell.classList.remove('highlight');
+                cell.classList.remove('hidden');
+            });
+            return;
+        }
+
+        // Filter matching elements
+        const matches = ELEMENTS.filter(el =>
+            el.name.toLowerCase().includes(query) ||
+            el.symbol.toLowerCase().includes(query) ||
+            el.atomicNumber.toString().includes(query)
+        );
+
+
+        cells.forEach(cell => {
+            const symbol = cell.dataset.symbol;
+
+            let isMatch = false;
+
+
+            for (let i = 0; i < matches.length; i++) {
+                if (matches[i].symbol === symbol) {
+                    isMatch = true;
+                    break; // stop loop once found
+                }
+            }
+
+            if (isMatch) {
+                cell.classList.add('highlight');
+                cell.classList.remove('hidden');
+            } else {
+                cell.classList.remove('highlight');
+
+                if (query.length >= 2) {
+                    cell.classList.add('hidden');
+                }
+            }
+        });
+    });
+}
 
 function restoreUIState() {
     // Restore weak styling
@@ -466,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderElement();
     loginModal();
     loadWeakElements();
+    setupSearch();
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
