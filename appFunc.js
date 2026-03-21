@@ -11,7 +11,7 @@
 let elements = ELEMENTS;
 let periodicTableGrid = document.getElementById('periodicTable');
 
-
+//object used to store constant keys
 const STORAGE_KEYS = {
     PROFILE: 'chemistryRevision_profile',
     WELCOME_SEEN: 'chemistryRevision_welcomeSeen',
@@ -62,9 +62,22 @@ function getElementCategory(el) {
  * - Cells get: element-cell, cat-{category}, data-symbol for search/filter
  */
 function renderElement() {
+    periodicTableGrid.innerHTML = '';
+
+    const elementsToShow = getFilteredElements();
+
+    if (elementsToShow.length === 0) {
+        const msg = state.filterMode === 'weak'
+            ? 'No elements need practice.'
+            : 'No elements match the period filter.';
+        periodicTableGrid.innerHTML = `<p>${msg}</p>`;
+        return;
+    }
+
     const grid = {};
 
-    elements.forEach(el => {
+    //  USE FILTERED DATA
+    elementsToShow.forEach(el => {
         let keyName = `${el.xpos}-${el.ypos}`;
         grid[keyName] = el;
     });
@@ -82,22 +95,28 @@ function renderElement() {
                 const category = getElementCategory(element);
                 cell.className = `element-cell cat-${category}`;
                 cell.innerHTML = `
-                <span class="element-symbol">${element.symbol}</span>
-                <span class="element-number">${element.atomicNumber}</span>
+               <span class="element-symbol">${element.symbol}</span>
+               <span class="element-number">${element.atomicNumber}</span>
             `;
-                //by krithika
                 cell.addEventListener('click', () => {
                     handleElementClick(element);
                 });
 
+
+                cell.style.gridColumn = j;
+                cell.style.gridRow = i;
             } else {
-                cell.style.visibility = "hidden"; // Empty grid positions
+                cell.style.visibility = "hidden";
+                cell.style.gridColumn = j;
+                cell.style.gridRow = i;
             }
 
             periodicTableGrid.appendChild(cell);
         }
     }
 }
+
+
 
 // element was clicked and updates the detail panel.
 // It also removes highlight from all cells and highlights only the clicked one.
@@ -110,7 +129,7 @@ function handleElementClick(element) {
         c.classList.remove('highlight'));
     const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
     if (cell) cell.classList.add('highlight');
-    handleCompareSelection(element);
+
 }
 
 
@@ -278,8 +297,104 @@ function renderDetailPanel(element) {
                 c.classList.toggle('weak', e.target.checked));
         });
     }
+    const compareBtn = document.getElementById('compareSelectBtn');
+
+    if (compareBtn) {
+        compareBtn.onclick = () => {
+            handleCompareSelection(element);
+        };
+    }
 }
 
+function handleCompareSelection(element) {
+    const sym = element.symbol;
+
+    // Prevent duplicate selection
+    if (state.compareSelection.includes(sym)) return;
+
+    // Allow only 2 elements
+    if (state.compareSelection.length >= 2) {
+        state.compareSelection.shift(); // remove oldest
+    }
+
+    state.compareSelection.push(sym);
+
+    renderComparison();
+}
+
+function renderComparison() {
+    const panel = document.getElementById('comparisonPanel');
+    const table = document.getElementById('comparisonTable');
+    const hint = document.getElementById('comparisonHint');
+
+    if (state.compareSelection.length < 2) {
+        panel.style.display = 'block';
+        hint.textContent = "Select 2 elements to compare";
+        table.innerHTML = "";
+        return;
+    }
+
+    const el1 = elements.find(e => e.symbol === state.compareSelection[0]);
+    const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
+
+    panel.style.display = 'block';
+    hint.textContent = "";
+
+    table.innerHTML = `
+        <table>
+            <tr>
+                <th>Property</th>
+                <th>${el1.symbol}</th>
+                <th>${el2.symbol}</th>
+            </tr>
+            <tr>
+                <td>Name</td>
+                <td>${el1.name}</td>
+                <td>${el2.name}</td>
+            </tr>
+            <tr>
+                <td>Atomic Number</td>
+                <td>${el1.atomicNumber}</td>
+                <td>${el2.atomicNumber}</td>
+            </tr>
+            <tr>
+                <td>Atomic Mass</td>
+                <td>${el1.atomicMass}</td>
+                <td>${el2.atomicMass}</td>
+            </tr>
+            <tr>
+                <td>Group</td>
+                <td>${el1.group}</td>
+                <td>${el2.group}</td>
+            </tr>
+            <tr>
+                <td>Period</td>
+                <td>${el1.period}</td>
+                <td>${el2.period}</td>
+            </tr>
+            <tr>
+                <td>Electron Config</td>
+                <td>${el1.electronConfiguration}</td>
+                <td>${el2.electronConfiguration}</td>
+            </tr>
+        </table>
+    `;
+}
+
+document.getElementById('clearComparison').addEventListener('click', () => {
+    state.compareSelection = [];
+    document.getElementById('comparisonTable').innerHTML = "";
+    document.getElementById('comparisonHint').textContent =
+        "1. Click an element → 2. Select to Compare → 3. Repeat";
+});
+
+document.getElementById('closeComparison').addEventListener('click', () => {
+    document.getElementById('comparisonPanel').style.display = 'none';
+});
+
+document.getElementById('compareBtn').addEventListener('click', () => {
+    document.getElementById('comparisonPanel').style.display = 'block';
+});
 
 function saveWeakElements() {
     try {
@@ -349,6 +464,92 @@ function loadState() {
     } catch (e) {
         console.warn("State load error:", e);
     }
+}
+function setupSearch() {
+    const input = document.getElementById('searchInput');
+
+    input.addEventListener('input', () => {
+        const query = input.value.toLowerCase().trim();
+
+        const cells = document.querySelectorAll('.element-cell');
+
+        // Reset if empty
+        if (query === '') {
+            cells.forEach(cell => {
+                cell.classList.remove('highlight');
+                cell.classList.remove('hidden');
+            });
+            return;
+        }
+
+        // Filter matching elements
+        const matches = ELEMENTS.filter(el =>
+            el.name.toLowerCase().includes(query) ||
+            el.symbol.toLowerCase().includes(query) ||
+            el.atomicNumber.toString().includes(query)
+        );
+
+
+        cells.forEach(cell => {
+            const symbol = cell.dataset.symbol;
+
+            let isMatch = false;
+
+
+            for (let i = 0; i < matches.length; i++) {
+                if (matches[i].symbol === symbol) {
+                    isMatch = true;
+                    break; // stop loop once found
+                }
+            }
+
+            if (isMatch) {
+                cell.classList.add('highlight');
+                cell.classList.remove('hidden');
+            } else {
+                cell.classList.remove('highlight');
+
+                if (query.length >= 2) {
+                    cell.classList.add('hidden');
+                }
+            }
+        });
+    });
+}
+// Applies All/Weak and period filters before rendering
+function getFilteredElements() {
+    let elements = ELEMENTS;
+    if (state.filterMode === 'weak') {
+        elements = elements.filter(el => state.weakElements[el.symbol] ===
+            'weak');
+    }
+    if (state.filterPeriods.length > 0) {
+        elements = elements.filter(el =>
+            state.filterPeriods.includes(el.period));
+    }
+    return elements;
+}
+
+function setupFilters() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const periodCheckboxes = document.querySelectorAll('.period-filter');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.filterMode = btn.dataset.filter;
+            renderElement();
+        });
+    });
+    periodCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+
+            state.filterPeriods = Array.from(document.querySelectorAll('.period-filter:checked'))
+
+                .map(c => parseInt(c.value, 10));
+            renderElement();
+        });
+    });
 }
 
 function restoreUIState() {
@@ -447,6 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderElement();
     loginModal();
     loadWeakElements();
+    setupSearch();
+    setupFilters();
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
