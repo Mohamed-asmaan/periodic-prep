@@ -22,8 +22,9 @@
 </head>
 
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <!-- HEADER: App title + tagline (tagline updates with user name after profile) -->
-  <header class="header">
+  <header class="header" role="banner">
     <h1>Periodic Prep</h1>
     <p class="tagline" id="headerTagline">Periodic table study tool — explore, study, quiz</p>
   </header>
@@ -32,7 +33,7 @@
   <div id="profileModal" class="modal" aria-hidden="true">
     <div class="modal-content profile-modal-content">
       <h2>Welcome!</h2>
-      <p class="profile-subtitle">Create your profile to get started</p>
+      <p class="profile-subtitle" id="profileModalDesc">Create your profile to get started</p>
       <form id="profileForm" class="profile-form" novalidate>
         <div class="form-group">
           <label for="profileName">Name <span class="required">*</span></label>
@@ -51,52 +52,55 @@
   </div>
 
   <!-- WELCOME MODAL: Tips shown after profile creation. ID: welcomeClose to dismiss -->
-  <div id="welcomeModal" class="modal" aria-hidden="true">
+  <div id="welcomeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle"
+    aria-describedby="welcomeModalDesc" aria-hidden="true">
     <div class="modal-content">
-      <h2>Welcome to Periodic Prep</h2>
-      <p>An interactive periodic table study tool. Search elements, hide properties to test your memory, take quizzes,
+      <h2 id="welcomeModalTitle">Welcome to Periodic Prep</h2>
+      <p id="welcomeModalDesc">An interactive periodic table study tool. Search elements, hide properties to test your memory, take quizzes,
         and track what you need to practice.</p>
       <ul>
-        <li><strong>Click</strong> any element to see details</li>
+        <li><strong>Select</strong> any element to see details</li>
         <li><strong>Search</strong> by name, symbol, or atomic number</li>
         <li><strong>Study Mode</strong> — hide properties and test your memory</li>
         <li><strong>Quiz</strong> — test your knowledge</li>
         <li><strong>Track</strong> weak elements and practice them</li>
       </ul>
-      <button id="welcomeClose" class="btn btn-primary">Get Started</button>
+      <button type="button" id="welcomeClose" class="btn btn-primary">Get Started</button>
     </div>
   </div>
 
   <!-- CONTINUE BANNER: "Continue learning [element]?" - uses lastViewed from localStorage. IDs: continueYes, continueDismiss -->
-  <div id="continueBanner" class="banner" style="display: none;">
-    <span>Continue learning <strong id="continueElementName">Iron</strong>?</span>
+  <div id="continueBanner" class="banner" role="region" aria-label="Continue learning" aria-hidden="true"
+    style="display: none;">
+    <span id="continueBannerText">Continue learning <strong id="continueElementName">Iron</strong>?</span>
     <div class="banner-buttons">
-      <button id="continueYes" class="btn btn-small">Yes</button>
-      <button id="continueDismiss" class="btn btn-small btn-outline">Later</button>
+      <button type="button" id="continueYes" class="btn btn-small">Yes, continue</button>
+      <button type="button" id="continueDismiss" class="btn btn-small btn-outline">Later</button>
     </div>
   </div>
 
   <!-- MAIN CONTENT -->
-  <main class="main">
+  <main id="main-content" class="main" tabindex="-1">
     <div class="main-grid">
       <!-- CONTROLS NAV: Search (searchInput) + Filter (filter-btn: all/weak) + Period checkboxes (period-filter) -->
-      <nav class="controls-nav">
+      <nav class="controls-nav" aria-label="Search, filters, and color legend">
         <div class="search-box">
-          <label for="searchInput">Search</label>
+          <label for="searchInput">Search elements</label>
           <div class="search-input-row">
-            <input type="text" id="searchInput" placeholder="Name, symbol, or number..." maxlength="50"
-              autocomplete="off">
+            <input type="search" id="searchInput" placeholder="Name, symbol, or number..." maxlength="50"
+              autocomplete="off" aria-describedby="searchHint" inputmode="search">
+            <span id="searchHint" class="visually-hidden">Filter the table by element name, symbol, or atomic number.</span>
           </div>
         </div>
         <div class="filter-section">
-          <span class="filter-label">Filter:</span>
-          <div class="filter-buttons">
-            <button type="button" class="filter-btn active" data-filter="all">All</button>
-            <button type="button" class="filter-btn" data-filter="weak">Need practice</button>
+          <span class="filter-label" id="filterLabel">Filter:</span>
+          <div class="filter-buttons" role="group" aria-labelledby="filterLabel">
+            <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">All elements</button>
+            <button type="button" class="filter-btn" data-filter="weak" aria-pressed="false">Need practice only</button>
           </div>
           <div class="filter-periods">
-            <span class="filter-label">Periods:</span>
-            <div class="period-checkboxes">
+            <span class="filter-label" id="periodsLabel">Periods:</span>
+            <div class="period-checkboxes" role="group" aria-labelledby="periodsLabel">
               <label><input type="checkbox" class="period-filter" value="1"> 1</label>
               <label><input type="checkbox" class="period-filter" value="2"> 2</label>
               <label><input type="checkbox" class="period-filter" value="3"> 3</label>
@@ -106,26 +110,28 @@
               <label><input type="checkbox" class="period-filter" value="7"> 7</label>
             </div>
           </div>
-          <div class="color-legend-inline">
-            <span class="legend-item"><i class="swatch swatch-alkali"></i> Alkali</span>
-            <span class="legend-item"><i class="swatch swatch-alkaline-earth"></i> Alkaline earth</span>
-            <span class="legend-item"><i class="swatch swatch-transition"></i> Transition</span>
-            <span class="legend-item"><i class="swatch swatch-post-transition"></i> Post-transition</span>
-            <span class="legend-item"><i class="swatch swatch-metalloid"></i> Metalloid</span>
-            <span class="legend-item"><i class="swatch swatch-nonmetal"></i> Nonmetal</span>
-            <span class="legend-item"><i class="swatch swatch-halogen"></i> Halogen</span>
-            <span class="legend-item"><i class="swatch swatch-noble-gas"></i> Noble gas</span>
-            <span class="legend-item"><i class="swatch swatch-lanthanide"></i> Lanthanide</span>
-            <span class="legend-item"><i class="swatch swatch-actinide"></i> Actinide</span>
+          <div class="color-legend-inline" role="list" aria-label="Element category colors">
+            <span class="legend-item" role="listitem"><i class="swatch swatch-alkali" aria-hidden="true"></i> Alkali</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-alkaline-earth" aria-hidden="true"></i> Alkaline earth</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-transition" aria-hidden="true"></i> Transition</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-post-transition" aria-hidden="true"></i> Post-transition</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-metalloid" aria-hidden="true"></i> Metalloid</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-nonmetal" aria-hidden="true"></i> Nonmetal</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-halogen" aria-hidden="true"></i> Halogen</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-noble-gas" aria-hidden="true"></i> Noble gas</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-lanthanide" aria-hidden="true"></i> Lanthanide</span>
+            <span class="legend-item" role="listitem"><i class="swatch swatch-actinide" aria-hidden="true"></i> Actinide</span>
           </div>
         </div>
       </nav>
 
       <!-- TOP ROW: Left = periodic table (periodicTable), Right = sidebar with progress, buttons, detail panel -->
       <div class="main-top-row">
-        <section class="table-column">
+        <section class="table-column" aria-label="Periodic table">
           <div class="table-section">
-            <div id="periodicTable" class="periodic-table" role="grid" aria-label="Periodic table of elements"></div>
+            <div id="periodicTable" class="periodic-table" role="grid"
+              aria-label="Periodic table of elements. Tab to move between cells, Enter or Space to select an element."
+              aria-readonly="true"></div>
           </div>
         </section>
 
@@ -134,35 +140,38 @@
           <div class="progress-section">
             <div class="progress-header">
               <span>Need practice</span>
-              <span id="progressText">5 elements</span>
+              <span id="progressText">0 elements</span>
             </div>
-            <div class="progress-bar">
-              <div id="progressFill" class="progress-fill"></div>
+            <div id="progressBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+              aria-valuenow="0" aria-label="Practice progress: elements marked as need practice" aria-describedby="progressText">
+              <div id="progressFill" class="progress-fill" aria-hidden="true"></div>
             </div>
           </div>
 
           <div class="sidebar-inner">
 
 
-            <div class="action-buttons">
-              <button id="studyModeBtn" class="btn btn-secondary">Study Mode</button>
-              <button id="compareBtn" class="btn btn-secondary">Compare</button>
-              <button id="quizBtn" class="btn btn-primary">Quiz</button>
+            <div class="action-buttons" role="group" aria-label="Study tools">
+              <button type="button" id="studyModeBtn" class="btn btn-secondary" aria-expanded="false"
+                aria-controls="studyOptions">Study Mode</button>
+              <button type="button" id="compareBtn" class="btn btn-secondary" aria-expanded="false"
+                aria-controls="comparisonPanel">Compare elements</button>
+              <button type="button" id="quizBtn" class="btn btn-primary" aria-haspopup="dialog">Start quiz</button>
             </div>
 
             <!-- DETAIL PANEL: Shows element info when clicked. IDs: detailContent, detailActions, compareSelectBtn -->
             <section id="detailPanel" class="detail-panel" aria-label="Element details">
               <h3 class="panel-title">Element Details</h3>
-              <div id="detailContent" class="detail-content">
-                <p class="detail-placeholder">Click an element to view details</p>
+              <div id="detailContent" class="detail-content" aria-live="polite" aria-atomic="true">
+                <p class="detail-placeholder">Select an element in the table to view details</p>
               </div>
               <div id="detailActions" class="detail-actions" style="display: none;">
-                <button id="compareSelectBtn" class="btn btn-secondary">Select to Compare</button>
+                <button type="button" id="compareSelectBtn" class="btn btn-secondary">Select to compare</button>
               </div>
             </section>
 
             <!-- STUDY MODE: Checkboxes to hide properties (atomic number, mass, electron config, group). ID: closeStudyMode -->
-            <section id="studyOptions" class="study-options" style="display: none;">
+            <section id="studyOptions" class="study-options" style="display: none;" aria-label="Study mode options">
               <h3>Hide properties (try to recall)</h3>
               <div class="study-checkboxes">
                 <label><input type="checkbox" id="hideAtomicNumber"> Atomic Number</label>
@@ -170,40 +179,42 @@
                 <label><input type="checkbox" id="hideElectronConfig"> Electron Config</label>
                 <label><input type="checkbox" id="hideGroup"> Group</label>
               </div>
-              <button id="closeStudyMode" class="btn btn-small">Close Study Mode</button>
+              <button type="button" id="closeStudyMode" class="btn btn-small">Close Study Mode</button>
             </section>
           </div>
         </aside>
       </div>
 
       <!-- Comparison table: full width below periodic table + info card -->
-      <section id="comparisonPanel" class="comparison-panel comparison-fullwidth" style="display: none;">
+      <section id="comparisonPanel" class="comparison-panel comparison-fullwidth" style="display: none;"
+        aria-label="Element comparison" tabindex="-1">
         <h3>Element Comparison</h3>
-        <p class="comparison-hint" id="comparisonHint">1. Click an element in the table → 2. Click "Select to Compare" below → 3. Repeat for second element</p>
+        <p class="comparison-hint" id="comparisonHint">1. Select an element in the table → 2. Use &quot;Select to compare&quot; → 3. Repeat for a second element</p>
         <div id="comparisonTable" class="comparison-table"></div>
         <div class="comparison-actions">
-          <button id="clearComparison" class="btn btn-small">Clear</button>
-          <button id="closeComparison" class="btn btn-small">Close</button>
+          <button type="button" id="clearComparison" class="btn btn-small">Clear comparison</button>
+          <button type="button" id="closeComparison" class="btn btn-small">Close comparison panel</button>
         </div>
       </section>
     </div>
 
     <!-- QUIZ MODAL: Multiple choice quiz. IDs: quizQuestion, quizOptions, quizScore, quizTotal, quizClose -->
-    <div id="quizModal" class="modal" aria-hidden="true">
+    <div id="quizModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="quizModalTitle"
+      aria-hidden="true">
 
       <div class="modal-content quiz-content">
-        <h2>Quiz Mode</h2>
-        <p id="quizQuestion" class="quiz-question"></p>
-        <div id="quizOptions" class="quiz-options"></div>
-        <div class="quiz-score">
+        <h2 id="quizModalTitle">Quiz Mode</h2>
+        <p id="quizQuestion" class="quiz-question" aria-live="polite"></p>
+        <div id="quizOptions" class="quiz-options" role="group" aria-label="Answer choices"></div>
+        <div class="quiz-score" role="status" aria-live="polite">
           <span>Score: <strong id="quizScore">0</strong> / <strong id="quizTotal">0</strong></span>
         </div>
-        <button id="quizClose" class="btn btn-secondary">End Quiz</button>
+        <button type="button" id="quizClose" class="btn btn-secondary">End quiz</button>
       </div>
     </div>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <p class="footer-text"><strong>Periodic Prep</strong> — Interactive periodic table study tool. Master all 118
       elements with search, study mode, quizzes, and progress tracking.</p>
     <p class="footer-copy">&copy; <span id="footerYear"></span> Periodic Prep. All rights reserved.</p>

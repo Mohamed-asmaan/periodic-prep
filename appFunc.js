@@ -5,7 +5,20 @@
  * Run BEFORE app.js (load order in index.html).
  * - getElementCategory: maps element to category for CSS color (alkali, halogen, etc.)
  * - renderElement: builds 18x10 grid, fills cells with symbol + atomic number
+ *
+ * Accessibility: keyboard (Tab / Enter / Space), ARIA on grid cells, modals, live regions.
  */
+
+function prefersReducedMotion() {
+    return typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function setModalOpen(modalEl, open) {
+    if (!modalEl) return;
+    modalEl.setAttribute('aria-hidden', open ? 'false' : 'true');
+    modalEl.style.display = open ? 'flex' : 'none';
+}
 
 // Elements data from elements-data.js (must be loaded first)
 let elements = ELEMENTS;
@@ -97,18 +110,27 @@ function renderElement() {
                 if (state.weakElements[element.symbol] === 'weak') {
                     cell.classList.add('weak');
                 }
+                cell.tabIndex = 0;
+                const catLabel = category.replace(/-/g, ' ');
+                cell.setAttribute('aria-label',
+                    `${element.name}, symbol ${element.symbol}, atomic number ${element.atomicNumber}, ${catLabel}`);
                 cell.innerHTML = `
-                <span class="element-symbol">${element.symbol}</span>
-                <span class="element-number">${element.atomicNumber}</span>
+                <span class="element-symbol" aria-hidden="true">${element.symbol}</span>
+                <span class="element-number" aria-hidden="true">${element.atomicNumber}</span>
             `;
-                cell.addEventListener('click', () => {
-                    handleElementClick(element);
+                const activate = () => handleElementClick(element);
+                cell.addEventListener('click', activate);
+                cell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        activate();
+                    }
                 });
-
-
                 cell.style.gridColumn = j;
                 cell.style.gridRow = i;
             } else {
+                cell.setAttribute('aria-hidden', 'true');
+                cell.tabIndex = -1;
                 cell.style.visibility = "hidden";
                 cell.style.gridColumn = j;
                 cell.style.gridRow = i;
@@ -127,12 +149,16 @@ function handleElementClick(element) {
     if (!element) return;
     saveLastViewed(element.symbol);
     renderDetailPanel(element);
-    // Only one cell highlighted at a time
-    document.querySelectorAll('.element-cell.highlight').forEach(c =>
-        c.classList.remove('highlight'));
-    const cell = document.querySelector(`[data-symbol="${element.symbol}"]`);
-    if (cell) cell.classList.add('highlight');
-
+    document.querySelectorAll('.element-cell[data-symbol]').forEach(c => {
+        if (!c.dataset.symbol) return;
+        c.classList.remove('highlight');
+        c.removeAttribute('aria-selected');
+    });
+    const cell = document.querySelector(`.element-cell[data-symbol="${element.symbol}"]`);
+    if (cell) {
+        cell.classList.add('highlight');
+        cell.setAttribute('aria-selected', 'true');
+    }
 }
 
 
@@ -167,19 +193,22 @@ function loadContinueBanner() {
     const nameEl = document.getElementById('continueElementName');
     if (nameEl && el) nameEl.textContent = el.name;
 
-    dismissBtn.addEventListener('click', () => { banner.style.display = 'none'; });
+    dismissBtn.addEventListener('click', () => {
+        banner.style.display = 'none';
+        banner.setAttribute('aria-hidden', 'true');
+    });
 
     btn.onclick = () => {
         if (el) {
             handleElementClick(el);
             banner.style.display = 'none';
+            banner.setAttribute('aria-hidden', 'true');
         }
     };
 
     const lastCell = document.querySelector(`[data-symbol="${last}"]`);
     if (lastCell && el) {
         lastCell.classList.add('highlight');
-        lastCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
         renderDetailPanel(el);
     }
 }
@@ -209,14 +238,21 @@ function updateProgressUI() {
     const progressBar = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
-    const weakCount = Object.keys(state.weakElements).length;
+    const weakCount = Object.keys(state.weakElements).filter(
+        k => state.weakElements[k] === 'weak').length;
+
     const total = elements.length; // 118
 
     // Each element = (100/118)% of the bar
     const percent = Math.round((weakCount / total) * 100);
 
     if (progressBar) {
-        progressBar.style.width = percent + '%';  // grows as weakCount increases
+        progressBar.style.width = percent + '%';
+    }
+
+    const progressBarWrap = document.getElementById('progressBar');
+    if (progressBarWrap) {
+        progressBarWrap.setAttribute('aria-valuenow', String(Math.min(100, percent)));
     }
 
     if (progressText) {
@@ -241,8 +277,8 @@ function renderDetailPanel(element) {
 <h2>${element.name}</h2>
 <label class="needs-practice-toggle">
 <input type="checkbox" id="needsPracticeCheck" ${isWeak ? 'checked' :
-            ''} data-symbol="${element.symbol}">
-<span class="toggle-slider"></span>
+            ''} data-symbol="${element.symbol}" aria-label="Mark ${element.name} as needs practice for later review">
+<span class="toggle-slider" aria-hidden="true"></span>
 <span class="toggle-label">Needs practice</span>
 </label>
 <div class="detail-row">
@@ -325,6 +361,7 @@ function renderComparison() {
 
     if (state.compareSelection.length < 2) {
         panel.style.display = 'block';
+        document.getElementById('compareBtn')?.setAttribute('aria-expanded', 'true');
         hint.textContent = "Select 2 elements to compare";
         table.innerHTML = "";
         return;
@@ -336,10 +373,12 @@ function renderComparison() {
     const catB = getElementCategory(el2);
 
     panel.style.display = 'block';
+    document.getElementById('compareBtn')?.setAttribute('aria-expanded', 'true');
     hint.textContent = "";
 
     table.innerHTML = `
-        <table class="compare-table">
+        <table class="compare-table" role="table" aria-label="Compared element properties">
+  <thead>
   <tr>
     <th class="compare-prop-col">Property</th>
     <th class="compare-elem-col cat-${catA}">
@@ -351,7 +390,8 @@ function renderComparison() {
       <span class="compare-elem-name">${el2.name}</span>
     </th>
   </tr>
-
+  </thead>
+  <tbody>
   <tr>
     <td>Name</td>
     <td>${el1.name}</td>
@@ -387,6 +427,7 @@ function renderComparison() {
     <td class="compare-config">${el1.electronConfiguration}</td>
     <td class="compare-config">${el2.electronConfiguration}</td>
   </tr>
+  </tbody>
 </table>`;
 }
 
@@ -394,15 +435,21 @@ document.getElementById('clearComparison').addEventListener('click', () => {
     state.compareSelection = [];
     document.getElementById('comparisonTable').innerHTML = "";
     document.getElementById('comparisonHint').textContent =
-        "1. Click an element → 2. Select to Compare → 3. Repeat";
+        "1. Select an element in the table → 2. Select to compare → 3. Repeat for a second element";
 });
 
 document.getElementById('closeComparison').addEventListener('click', () => {
     document.getElementById('comparisonPanel').style.display = 'none';
+    document.getElementById('compareBtn').setAttribute('aria-expanded', 'false');
+    document.getElementById('compareBtn').focus();
 });
 
 document.getElementById('compareBtn').addEventListener('click', () => {
-    document.getElementById('comparisonPanel').style.display = 'block';
+    const panel = document.getElementById('comparisonPanel');
+    const compareBtn = document.getElementById('compareBtn');
+    panel.style.display = 'block';
+    compareBtn.setAttribute('aria-expanded', 'true');
+    panel.focus({ preventScroll: true });
 });
 
 function saveWeakElements() {
@@ -426,7 +473,11 @@ function loginModal() {
         state.userName = profile.name;
         if (tagline) tagline.textContent = `Welcome, ${profile.name} — periodic table study tool`;
     } else {
-        profileModal.style.display = "flex";
+        setModalOpen(profileModal, true);
+        requestAnimationFrame(() => {
+            const first = document.getElementById('profileName');
+            if (first) first.focus();
+        });
     }
 
     profileForm.addEventListener('submit', (e) => {
@@ -434,10 +485,25 @@ function loginModal() {
         const name = document.getElementById('profileName').value.trim();
         const email = document.getElementById('profileEmail').value.trim();
 
+        if (name.length < 2) {
+            const ne = document.getElementById('nameError');
+            if (ne) ne.textContent = 'Name must be at least 2 characters';
+            document.getElementById('profileName')?.focus();
+            return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            const ee = document.getElementById('emailError');
+            if (ee) ee.textContent = 'Please enter a valid email';
+            document.getElementById('profileEmail')?.focus();
+            return;
+        }
+        document.getElementById('nameError').textContent = '';
+        document.getElementById('emailError').textContent = '';
+
         const profile = { name, email };
         localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
         state.userName = name;
-        profileModal.style.display = 'none';
+        setModalOpen(profileModal, false);
 
         if (tagline) tagline.textContent = `Welcome, ${name} — periodic table study tool`;
         loadWelcomeModal();
@@ -448,12 +514,10 @@ function loginModal() {
 function loadWelcomeModal() {
     const welcome = document.getElementById('welcomeModal');
     const start = document.getElementById('welcomeClose');
-    welcome.style.display = "flex"
+    setModalOpen(welcome, true);
+    requestAnimationFrame(() => start?.focus());
 
-    start.addEventListener('click', () => {
-        welcome.style.display = "none"
-    })
-
+    start.addEventListener('click', () => setModalOpen(welcome, false), { once: true });
 }
 
 function loadState() {
@@ -532,8 +596,12 @@ function setupFilters() {
     const periodCheckboxes = document.querySelectorAll('.period-filter');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
+            filterBtns.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
             btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
             state.filterMode = btn.dataset.filter;
             renderElement();
         });
@@ -562,9 +630,13 @@ function startQuiz() {
     state.quizScore = 0;
     state.quizTotal = 0;
     state.quizActive = true;
-    document.getElementById('quizModal').style.display = 'flex';
-
+    const quizModal = document.getElementById('quizModal');
+    setModalOpen(quizModal, true);
     nextQuestion();
+    requestAnimationFrame(() => {
+        const first = document.querySelector('#quizOptions button');
+        if (first) first.focus();
+    });
 }
 const QUIZ_LIMIT = 5;
 function nextQuestion() {
@@ -587,10 +659,11 @@ function nextQuestion() {
 
     q.options.forEach(opt => {
         const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-option';
         btn.textContent = opt;
-
+        btn.setAttribute('aria-label', `Answer: ${opt}`);
         btn.onclick = () => handleAnswer(opt, btn);
-
         optionsEl.appendChild(btn);
     });
 }
@@ -660,7 +733,9 @@ function handleAnswer(selected, btn) {
 
     setTimeout(() => {
         nextQuestion();
-    }, 1000);
+        const first = document.querySelector('#quizOptions button');
+        if (first) first.focus();
+    }, prefersReducedMotion() ? 0 : 1000);
 }
 
 function updateQuizScore() {
@@ -676,15 +751,15 @@ function endQuiz() {
     const optionsEl = document.getElementById('quizOptions');
 
     questionEl.textContent = `Final Score: ${state.quizScore} / ${state.quizTotal}`;
-    optionsEl.innerHTML = `<p>Click "End Quiz" again to close</p>`;
+    optionsEl.innerHTML = `<p role="status">Press End quiz again to close.</p>`;
+    document.getElementById('quizClose')?.focus();
 }
 document.getElementById('quizClose').addEventListener('click', () => {
     if (!state.quizActive) {
-        document.getElementById('quizModal').style.display = 'none';
-
-        // reset AFTER closing
+        setModalOpen(document.getElementById('quizModal'), false);
         state.quizScore = 0;
         state.quizTotal = 0;
+        document.getElementById('quizBtn')?.focus();
     } else {
         endQuiz();
     }
@@ -718,6 +793,7 @@ function setupStudyMode() {
         if (anyHidden) {
             options.style.display = 'block';
             btn.textContent = 'Exit Study Mode';
+            btn.setAttribute('aria-expanded', 'true');
             state.studyMode = true;
         }
     }
@@ -728,9 +804,11 @@ function setupStudyMode() {
         if (state.studyMode) {
             options.style.display = 'block';
             btn.textContent = 'Exit Study Mode';
+            btn.setAttribute('aria-expanded', 'true');
         } else {
             options.style.display = 'none';
             btn.textContent = 'Study Mode';
+            btn.setAttribute('aria-expanded', 'false');
 
             // Clear all hidden state when exiting
             state.studyHidden = {};
@@ -776,6 +854,7 @@ function setupStudyMode() {
         state.studyMode = false;
         options.style.display = 'none';
         btn.textContent = 'Study Mode';
+        btn.setAttribute('aria-expanded', 'false');
 
         // Clear hidden state
         state.studyHidden = {};
@@ -796,6 +875,9 @@ function setupStudyMode() {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    const y = document.getElementById('footerYear');
+    if (y) y.textContent = String(new Date().getFullYear());
+
     loadState();
     renderElement();
     loginModal();
