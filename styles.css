@@ -17,7 +17,6 @@
 :root {
   --color-bg: #f1f5f9;
   --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
   --color-primary: #0f766e;
   --color-primary-hover: #0d9488;
   --color-primary-light: #ccfbf1;
@@ -61,6 +60,42 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Skip link — WCAG 2.4.1 Bypass Blocks */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0.75rem;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+  outline: 3px solid var(--color-warn);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only text */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---------- 2. Header ---------- */
@@ -301,7 +336,8 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .controls-nav {
@@ -353,104 +389,6 @@ body {
 
 .search-box input::placeholder {
   color: var(--color-text-muted);
-}
-
-/* Color legend tooltip */
-.color-legend-trigger {
-  position: relative;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--color-border-light);
-  border-radius: 50%;
-  cursor: help;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  transition: background 0.2s, color 0.2s;
-}
-
-.color-legend-trigger:hover {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.color-legend-icon {
-  line-height: 1;
-}
-
-.color-legend-tooltip {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.5rem);
-  transform: translateX(-50%) translateY(4px);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  padding: 0.85rem 1rem;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  color: var(--color-text);
-  z-index: 100;
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.2rem 1.25rem;
-  max-width: 280px;
-}
-
-.color-legend-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--color-surface);
-}
-
-.color-legend-trigger:hover .color-legend-tooltip,
-.color-legend-trigger:focus .color-legend-tooltip {
-  visibility: visible;
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.color-legend-trigger:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.color-legend-tooltip strong {
-  grid-column: 1 / -1;
-  margin-bottom: 0.35rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-}
-
-.color-legend-tooltip .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-}
-
-.color-legend-tooltip .swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .swatch-alkali {
@@ -574,13 +512,38 @@ body {
   accent-color: var(--color-primary);
 }
 
+/* Color legend inline in filter section */
+.color-legend-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.color-legend-inline .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.color-legend-inline .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
 /* ---------- 8. Periodic Table Grid ---------- */
 .table-section {
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
   padding: 1rem;
   display: flex;
   align-items: flex-start;
@@ -690,6 +653,17 @@ body {
   filter: brightness(1.1);
 }
 
+.element-cell:focus {
+  outline: none;
+}
+
+.element-cell:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  z-index: 3;
+  box-shadow: var(--shadow-md);
+}
+
 .element-cell.highlight {
   background: var(--color-warn-light);
   border-color: var(--color-warn);
@@ -739,7 +713,8 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  border: 1px solid var(--color-border);
+  /* border: 1px solid var(--color-border); */
+  padding: 16px;
 }
 
 .sidebar-inner {
@@ -807,6 +782,16 @@ body {
 
 .btn:active {
   transform: scale(0.98);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.filter-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .btn-primary {
@@ -1216,10 +1201,31 @@ body {
   background: var(--color-weak-light);
 }
 
+.quiz-option:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .quiz-score {
   margin: 1rem 0;
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* Respect reduced motion (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .element-cell:hover {
+    transform: none;
+  }
 }
 
 /* ---------- 14. Responsive Breakpoints ---------- */
@@ -1235,6 +1241,21 @@ body {
 
   .main-grid {
     gap: 1.25rem;
+  }
+
+  /* Page scrolls vertically; only the table area scrolls horizontally (one scroll layer) */
+  .table-column {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .table-section {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
   }
 }
 
@@ -1265,18 +1286,22 @@ body {
   }
 
   .table-column {
-    overflow-x: auto;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
+    max-height: none;
   }
 
   .table-section {
     padding: 0.75rem;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: visible;
     flex: none;
-    display: block;
-    width: max-content;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
   }
 
   .periodic-table {
@@ -1378,31 +1403,33 @@ body {
     flex-wrap: wrap;
   }
 
-  .color-legend-trigger {
-    width: 26px;
-    height: 26px;
-    font-size: 0.75rem;
+  .color-legend-inline {
+    font-size: 0.7rem;
+    gap: 0.35rem 0.6rem;
   }
 
-  .color-legend-tooltip {
-    max-width: min(260px, calc(100vw - 2rem));
-    font-size: 0.75rem;
-    padding: 0.65rem 0.85rem;
+  .color-legend-inline .swatch {
+    width: 8px;
+    height: 8px;
   }
 
   .table-column {
-    overflow-x: auto;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
+    max-height: none;
   }
 
   .table-section {
     padding: 0.5rem;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: visible;
     flex: none;
-    display: block;
-    width: max-content;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
   }
 
   .periodic-table {
@@ -1519,14 +1546,11 @@ body {
 
 /* Better hover feel */
 .element-cell:hover {
-  transform: translateY(-3px) scale(1.08);
+  transform: translateY(-1px) scale(1.08);
   box-shadow: var(--shadow-lg);
 }
 
-/* Pulse highlight */
-.element-cell.highlight {
-  animation: pulseGlow 1s infinite alternate;
-}
+
 
 @keyframes pulseGlow {
   from { transform: scale(1); }
