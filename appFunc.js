@@ -98,8 +98,8 @@ function renderElement() {
                     cell.classList.add('weak');
                 }
                 cell.innerHTML = `
-               <span class="element-symbol">${element.symbol}</span>
-               <span class="element-number">${element.atomicNumber}</span>
+                <span class="element-symbol">${element.symbol}</span>
+                <span class="element-number">${element.atomicNumber}</span>
             `;
                 cell.addEventListener('click', () => {
                     handleElementClick(element);
