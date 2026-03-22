@@ -17,7 +17,6 @@
 :root {
   --color-bg: #f1f5f9;
   --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
   --color-primary: #0f766e;
   --color-primary-hover: #0d9488;
   --color-primary-light: #ccfbf1;
@@ -355,104 +354,6 @@ body {
   color: var(--color-text-muted);
 }
 
-/* Color legend tooltip */
-.color-legend-trigger {
-  position: relative;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--color-border-light);
-  border-radius: 50%;
-  cursor: help;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  transition: background 0.2s, color 0.2s;
-}
-
-.color-legend-trigger:hover {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.color-legend-icon {
-  line-height: 1;
-}
-
-.color-legend-tooltip {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.5rem);
-  transform: translateX(-50%) translateY(4px);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  padding: 0.85rem 1rem;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  color: var(--color-text);
-  z-index: 100;
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.2rem 1.25rem;
-  max-width: 280px;
-}
-
-.color-legend-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--color-surface);
-}
-
-.color-legend-trigger:hover .color-legend-tooltip,
-.color-legend-trigger:focus .color-legend-tooltip {
-  visibility: visible;
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.color-legend-trigger:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.color-legend-tooltip strong {
-  grid-column: 1 / -1;
-  margin-bottom: 0.35rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-}
-
-.color-legend-tooltip .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-}
-
-.color-legend-tooltip .swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-}
-
 .swatch-alkali {
   background: #ffcc80;
 }
@@ -572,6 +473,32 @@ body {
 .period-checkboxes input {
   margin: 0;
   accent-color: var(--color-primary);
+}
+
+/* Color legend inline in filter section */
+.color-legend-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.color-legend-inline .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.color-legend-inline .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 /* ---------- 8. Periodic Table Grid ---------- */
@@ -1379,16 +1306,14 @@ body {
     flex-wrap: wrap;
   }
 
-  .color-legend-trigger {
-    width: 26px;
-    height: 26px;
-    font-size: 0.75rem;
+  .color-legend-inline {
+    font-size: 0.7rem;
+    gap: 0.35rem 0.6rem;
   }
 
-  .color-legend-tooltip {
-    max-width: min(260px, calc(100vw - 2rem));
-    font-size: 0.75rem;
-    padding: 0.65rem 0.85rem;
+  .color-legend-inline .swatch {
+    width: 8px;
+    height: 8px;
   }
 
   .table-column {

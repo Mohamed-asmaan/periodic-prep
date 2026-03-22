@@ -11,7 +11,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="PeriodC:\Users\rajapandian\Desktop\FSD\periodic-prep\periodic-prep\index.htmlic Prep — Interactive periodic table study tool. Master all 118 elements with search, study mode, quizzes, and progress tracking. Built for chemistry students.">
+    content="Periodic Prep — Interactive periodic table study tool. Master all 118 elements with search, study mode, quizzes, and progress tracking. Built for chemistry students.">
   <title>Periodic Prep — Periodic Table Study Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,23 +86,6 @@
           <div class="search-input-row">
             <input type="text" id="searchInput" placeholder="Name, symbol, or number..." maxlength="50"
               autocomplete="off">
-            <span class="color-legend-trigger" tabindex="0" title="Element colors by type"
-              aria-label="Color legend - hover or focus to see element type colors">
-              <span class="color-legend-icon">?</span>
-              <span class="color-legend-tooltip">
-                <strong>Colors = element type</strong>
-                <span class="legend-item"><i class="swatch swatch-alkali"></i> Alkali</span>
-                <span class="legend-item"><i class="swatch swatch-alkaline-earth"></i> Alkaline earth</span>
-                <span class="legend-item"><i class="swatch swatch-transition"></i> Transition</span>
-                <span class="legend-item"><i class="swatch swatch-post-transition"></i> Post-transition</span>
-                <span class="legend-item"><i class="swatch swatch-metalloid"></i> Metalloid</span>
-                <span class="legend-item"><i class="swatch swatch-nonmetal"></i> Nonmetal</span>
-                <span class="legend-item"><i class="swatch swatch-halogen"></i> Halogen</span>
-                <span class="legend-item"><i class="swatch swatch-noble-gas"></i> Noble gas</span>
-                <span class="legend-item"><i class="swatch swatch-lanthanide"></i> Lanthanide</span>
-                <span class="legend-item"><i class="swatch swatch-actinide"></i> Actinide</span>
-              </span>
-            </span>
           </div>
         </div>
         <div class="filter-section">
@@ -122,6 +105,18 @@
               <label><input type="checkbox" class="period-filter" value="6"> 6</label>
               <label><input type="checkbox" class="period-filter" value="7"> 7</label>
             </div>
+          </div>
+          <div class="color-legend-inline">
+            <span class="legend-item"><i class="swatch swatch-alkali"></i> Alkali</span>
+            <span class="legend-item"><i class="swatch swatch-alkaline-earth"></i> Alkaline earth</span>
+            <span class="legend-item"><i class="swatch swatch-transition"></i> Transition</span>
+            <span class="legend-item"><i class="swatch swatch-post-transition"></i> Post-transition</span>
+            <span class="legend-item"><i class="swatch swatch-metalloid"></i> Metalloid</span>
+            <span class="legend-item"><i class="swatch swatch-nonmetal"></i> Nonmetal</span>
+            <span class="legend-item"><i class="swatch swatch-halogen"></i> Halogen</span>
+            <span class="legend-item"><i class="swatch swatch-noble-gas"></i> Noble gas</span>
+            <span class="legend-item"><i class="swatch swatch-lanthanide"></i> Lanthanide</span>
+            <span class="legend-item"><i class="swatch swatch-actinide"></i> Actinide</span>
           </div>
         </div>
       </nav>
@@ -155,16 +150,14 @@
               <button id="quizBtn" class="btn btn-primary">Quiz</button>
             </div>
 
-            <!-- DETAIL PANEL: Shows element info when clicked. IDs: detailContent, detailActions, revealBtn, compareSelectBtn -->
+            <!-- DETAIL PANEL: Shows element info when clicked. IDs: detailContent, detailActions, compareSelectBtn -->
             <section id="detailPanel" class="detail-panel" aria-label="Element details">
               <h3 class="panel-title">Element Details</h3>
               <div id="detailContent" class="detail-content">
                 <p class="detail-placeholder">Click an element to view details</p>
               </div>
               <div id="detailActions" class="detail-actions" style="display: none;">
-                <button id="revealBtn" class="btn btn-primary">Reveal Answer</button>
                 <button id="compareSelectBtn" class="btn btn-secondary">Select to Compare</button>
-
               </div>
             </section>
 

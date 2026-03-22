@@ -14,16 +14,14 @@ let periodicTableGrid = document.getElementById('periodicTable');
 //object used to store constant keys
 const STORAGE_KEYS = {
     PROFILE: 'chemistryRevision_profile',
-    WELCOME_SEEN: 'chemistryRevision_welcomeSeen',
     WEAK_ELEMENTS: 'chemistryRevision_weakElements',
     LAST_VIEWED: 'chemistryRevision_lastViewed',
     STUDY_HIDDEN: 'chemistryRevision_studyHidden'
 };
 // Single source of truth — every feature reads/writes this
 let state = {
-    userName: null, // From profile form
-    userEmail: null,
-    studyMode: false, // Is study mode panel visible?
+    userName: null,
+    studyMode: false,
     studyHidden: {}, // { atomicNumber: true, atomicMass: false, ... }
     weakElements: {}, // { "Fe": "weak", "Au": "weak", ... }
     lastViewed: null, // Symbol of last clicked element, e.g. "Fe"
@@ -70,11 +68,13 @@ function renderElement() {
         const msg = state.filterMode === 'weak'
             ? 'No elements need practice.'
             : 'No elements match the period filter.';
-        periodicTableGrid.innerHTML = `<p>${msg}</p>`;
+        periodicTableGrid.innerHTML = `<p class="empty-message">${msg}</p>`;
         return;
     }
 
     const grid = {};
+
+    
 
     //  USE FILTERED DATA
     elementsToShow.forEach(el => {
@@ -94,6 +94,9 @@ function renderElement() {
             if (element) {
                 const category = getElementCategory(element);
                 cell.className = `element-cell cat-${category}`;
+                if (state.weakElements[element.symbol] === 'weak') {
+                    cell.classList.add('weak');
+                }
                 cell.innerHTML = `
                <span class="element-symbol">${element.symbol}</span>
                <span class="element-number">${element.atomicNumber}</span>
@@ -159,32 +162,25 @@ function loadContinueBanner() {
         return;
     }
 
-    // Show the banner
     banner.style.display = 'flex';
-    btn.textContent = `Continue learning: ${last}`;
+    const el = elements.find(e => e.symbol === last);
+    const nameEl = document.getElementById('continueElementName');
+    if (nameEl && el) nameEl.textContent = el.name;
 
-    dismissBtn.addEventListener('click', () => {
-        banner.style.display = 'none';
-        localStorage.removeItem(STORAGE_KEYS.LAST_VIEWED);
-    })
+    dismissBtn.addEventListener('click', () => { banner.style.display = 'none'; });
 
-    // Click button → go to element
     btn.onclick = () => {
-        const element = elements.find(el => el.symbol === last);
-        if (element) {
-            handleElementClick(element);
+        if (el) {
+            handleElementClick(el);
             banner.style.display = 'none';
         }
     };
 
-    // --- Auto-resume last viewed element ---
     const lastCell = document.querySelector(`[data-symbol="${last}"]`);
-    if (lastCell) {
-        lastCell.classList.add('highlight'); // highlight the cell
+    if (lastCell && el) {
+        lastCell.classList.add('highlight');
         lastCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        const elementData = elements.find(el => el.symbol === last);
-        if (elementData) renderDetailPanel(elementData);
+        renderDetailPanel(el);
     }
 }
 
@@ -335,10 +331,9 @@ function renderComparison() {
     }
 
     const el1 = elements.find(e => e.symbol === state.compareSelection[0]);
-const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
-
-const catA = getElementCategory(el1);
-const catB = getElementCategory(el2);
+    const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
+    const catA = getElementCategory(el1);
+    const catB = getElementCategory(el2);
 
     panel.style.display = 'block';
     hint.textContent = "";
@@ -392,9 +387,7 @@ const catB = getElementCategory(el2);
     <td class="compare-config">${el1.electronConfiguration}</td>
     <td class="compare-config">${el2.electronConfiguration}</td>
   </tr>
-</table>
-        
-    `;
+</table>`;
 }
 
 document.getElementById('clearComparison').addEventListener('click', () => {
@@ -427,12 +420,10 @@ function loginModal() {
     const profileForm = document.getElementById("profileForm");
     const tagline = document.getElementById('headerTagline');
 
-    // ✅ On load, check if profile already exists and update tagline
     const stored = localStorage.getItem(STORAGE_KEYS.PROFILE);
     if (stored) {
         const profile = JSON.parse(stored);
         state.userName = profile.name;
-        state.userEmail = profile.email;
         if (tagline) tagline.textContent = `Welcome, ${profile.name} — periodic table study tool`;
     } else {
         profileModal.style.display = "flex";
@@ -446,7 +437,6 @@ function loginModal() {
         const profile = { name, email };
         localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
         state.userName = name;
-        state.userEmail = email;
         profileModal.style.display = 'none';
 
         if (tagline) tagline.textContent = `Welcome, ${name} — periodic table study tool`;
@@ -508,16 +498,7 @@ function setupSearch() {
 
         cells.forEach(cell => {
             const symbol = cell.dataset.symbol;
-
-            let isMatch = false;
-
-
-            for (let i = 0; i < matches.length; i++) {
-                if (matches[i].symbol === symbol) {
-                    isMatch = true;
-                    break; // stop loop once found
-                }
-            }
+            const isMatch = matches.some(m => m.symbol === symbol);
 
             if (isMatch) {
                 cell.classList.add('highlight');
@@ -569,13 +550,6 @@ function setupFilters() {
 }
 
 function restoreUIState() {
-    // Restore weak styling
-    Object.keys(state.weakElements).forEach(sym => {
-        document.querySelectorAll(`[data-symbol="${sym}"]`)
-            .forEach(c => c.classList.add('weak'));
-    });
-
-    // Restore last viewed
     if (state.lastViewed) {
         const el = elements.find(e => e.symbol === state.lastViewed);
         if (el) handleElementClick(el);
@@ -728,7 +702,7 @@ function setupStudyMode() {
         hideGroup: 'group'
     };
 
-    // ✅ On load, restore study mode from localStorage
+    // Restore study mode from localStorage
     const savedHidden = localStorage.getItem(STORAGE_KEYS.STUDY_HIDDEN);
     if (savedHidden) {
         state.studyHidden = JSON.parse(savedHidden);
@@ -748,7 +722,6 @@ function setupStudyMode() {
         }
     }
 
-    // ✅ Open/close study mode panel
     btn.addEventListener('click', () => {
         state.studyMode = !state.studyMode;
 
@@ -777,7 +750,6 @@ function setupStudyMode() {
         }
     });
 
-    // ✅ Each checkbox toggles hiding that property
     Object.entries(checkboxIds).forEach(([checkboxId, stateKey]) => {
         const checkbox = document.getElementById(checkboxId);
 
@@ -800,7 +772,6 @@ function setupStudyMode() {
         });
     });
 
-    // ✅ Close button
     closeBtn.addEventListener('click', () => {
         state.studyMode = false;
         options.style.display = 'none';
@@ -831,7 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadWeakElements();
     setupSearch();
     setupFilters();
-    setupStudyMode(); // ✅ add this
+    setupStudyMode();
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
