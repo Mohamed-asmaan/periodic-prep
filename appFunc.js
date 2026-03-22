@@ -213,20 +213,20 @@ function updateProgressUI() {
     const progressBar = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
 
-    const total = elements.length;
     const weakCount = Object.keys(state.weakElements).length;
+    const total = elements.length; // 118
 
-    console.log("Total elements:", total, "Weak elements:", weakCount);
-
-    const learned = total - weakCount;
-    const percent = Math.round((learned / total) * 100);
+    // Each element = (100/118)% of the bar
+    const percent = Math.round((weakCount / total) * 100);
 
     if (progressBar) {
-        progressBar.style.width = percent + '%';
+        progressBar.style.width = percent + '%';  // grows as weakCount increases
     }
 
     if (progressText) {
-        progressText.textContent = `${percent}% completed`;
+        progressText.textContent = weakCount === 0
+            ? '0 elements'
+            : `${weakCount} element${weakCount > 1 ? 's' : ''}`;
     }
 }
 
@@ -335,49 +335,65 @@ function renderComparison() {
     }
 
     const el1 = elements.find(e => e.symbol === state.compareSelection[0]);
-    const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
+const el2 = elements.find(e => e.symbol === state.compareSelection[1]);
+
+const catA = getElementCategory(el1);
+const catB = getElementCategory(el2);
 
     panel.style.display = 'block';
     hint.textContent = "";
 
     table.innerHTML = `
-        <table>
-            <tr>
-                <th>Property</th>
-                <th>${el1.symbol}</th>
-                <th>${el2.symbol}</th>
-            </tr>
-            <tr>
-                <td>Name</td>
-                <td>${el1.name}</td>
-                <td>${el2.name}</td>
-            </tr>
-            <tr>
-                <td>Atomic Number</td>
-                <td>${el1.atomicNumber}</td>
-                <td>${el2.atomicNumber}</td>
-            </tr>
-            <tr>
-                <td>Atomic Mass</td>
-                <td>${el1.atomicMass}</td>
-                <td>${el2.atomicMass}</td>
-            </tr>
-            <tr>
-                <td>Group</td>
-                <td>${el1.group}</td>
-                <td>${el2.group}</td>
-            </tr>
-            <tr>
-                <td>Period</td>
-                <td>${el1.period}</td>
-                <td>${el2.period}</td>
-            </tr>
-            <tr>
-                <td>Electron Config</td>
-                <td>${el1.electronConfiguration}</td>
-                <td>${el2.electronConfiguration}</td>
-            </tr>
-        </table>
+        <table class="compare-table">
+  <tr>
+    <th class="compare-prop-col">Property</th>
+    <th class="compare-elem-col cat-${catA}">
+      ${el1.symbol}
+      <span class="compare-elem-name">${el1.name}</span>
+    </th>
+    <th class="compare-elem-col cat-${catB}">
+      ${el2.symbol}
+      <span class="compare-elem-name">${el2.name}</span>
+    </th>
+  </tr>
+
+  <tr>
+    <td>Name</td>
+    <td>${el1.name}</td>
+    <td>${el2.name}</td>
+  </tr>
+
+  <tr>
+    <td>Atomic Number</td>
+    <td>${el1.atomicNumber}</td>
+    <td>${el2.atomicNumber}</td>
+  </tr>
+
+  <tr>
+    <td>Atomic Mass</td>
+    <td>${el1.atomicMass}</td>
+    <td>${el2.atomicMass}</td>
+  </tr>
+
+  <tr>
+    <td>Group</td>
+    <td>${el1.group ?? '—'}</td>
+    <td>${el2.group ?? '—'}</td>
+  </tr>
+
+  <tr>
+    <td>Period</td>
+    <td>${el1.period}</td>
+    <td>${el2.period}</td>
+  </tr>
+
+  <tr class="compare-config-row">
+    <td>Electron Config</td>
+    <td class="compare-config">${el1.electronConfiguration}</td>
+    <td class="compare-config">${el2.electronConfiguration}</td>
+  </tr>
+</table>
+        
     `;
 }
 
@@ -657,14 +673,14 @@ function handleAnswer(selected, btn) {
     const buttons = document.querySelectorAll('#quizOptions button');
 
     buttons.forEach(b => {
-    b.disabled = true;
+        b.disabled = true;
 
-    if (b.textContent === correct) {
-        b.classList.add('correct');
-    } else if (b === btn) {
-        b.classList.add('wrong');
-    }
-});
+        if (b.textContent === correct) {
+            b.classList.add('correct');
+        } else if (b === btn) {
+            b.classList.add('wrong');
+        }
+    });
 
     updateQuizScore();
 
@@ -700,17 +716,123 @@ document.getElementById('quizClose').addEventListener('click', () => {
     }
 });
 
+function setupStudyMode() {
+    const btn = document.getElementById('studyModeBtn');
+    const options = document.getElementById('studyOptions');
+    const closeBtn = document.getElementById('closeStudyMode');
+
+    const checkboxIds = {
+        hideAtomicNumber: 'atomicNumber',
+        hideAtomicMass: 'atomicMass',
+        hideElectronConfig: 'electronConfiguration',
+        hideGroup: 'group'
+    };
+
+    // ✅ On load, restore study mode from localStorage
+    const savedHidden = localStorage.getItem(STORAGE_KEYS.STUDY_HIDDEN);
+    if (savedHidden) {
+        state.studyHidden = JSON.parse(savedHidden);
+
+        // Restore checkbox ticked states
+        Object.entries(checkboxIds).forEach(([checkboxId, stateKey]) => {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox) checkbox.checked = state.studyHidden[stateKey] || false;
+        });
+
+        // Show study options panel if any checkbox was ticked
+        const anyHidden = Object.values(state.studyHidden).some(v => v === true);
+        if (anyHidden) {
+            options.style.display = 'block';
+            btn.textContent = 'Exit Study Mode';
+            state.studyMode = true;
+        }
+    }
+
+    // ✅ Open/close study mode panel
+    btn.addEventListener('click', () => {
+        state.studyMode = !state.studyMode;
+
+        if (state.studyMode) {
+            options.style.display = 'block';
+            btn.textContent = 'Exit Study Mode';
+        } else {
+            options.style.display = 'none';
+            btn.textContent = 'Study Mode';
+
+            // Clear all hidden state when exiting
+            state.studyHidden = {};
+            localStorage.removeItem(STORAGE_KEYS.STUDY_HIDDEN);
+
+            // Uncheck all checkboxes
+            Object.keys(checkboxIds).forEach(id => {
+                document.getElementById(id).checked = false;
+            });
+
+            // Re-render detail panel to show all values
+            const sym = document.getElementById('detailActions')?.dataset?.symbol;
+            if (sym) {
+                const el = elements.find(e => e.symbol === sym);
+                if (el) renderDetailPanel(el);
+            }
+        }
+    });
+
+    // ✅ Each checkbox toggles hiding that property
+    Object.entries(checkboxIds).forEach(([checkboxId, stateKey]) => {
+        const checkbox = document.getElementById(checkboxId);
+
+        checkbox.addEventListener('change', () => {
+            // Update state — true means hidden
+            state.studyHidden[stateKey] = checkbox.checked;
+
+            // Save to localStorage
+            localStorage.setItem(
+                STORAGE_KEYS.STUDY_HIDDEN,
+                JSON.stringify(state.studyHidden)
+            );
+
+            // Re-render detail panel so ??? appears/disappears
+            const sym = document.getElementById('detailActions')?.dataset?.symbol;
+            if (sym) {
+                const el = elements.find(e => e.symbol === sym);
+                if (el) renderDetailPanel(el);
+            }
+        });
+    });
+
+    // ✅ Close button
+    closeBtn.addEventListener('click', () => {
+        state.studyMode = false;
+        options.style.display = 'none';
+        btn.textContent = 'Study Mode';
+
+        // Clear hidden state
+        state.studyHidden = {};
+        localStorage.removeItem(STORAGE_KEYS.STUDY_HIDDEN);
+
+        Object.keys(checkboxIds).forEach(id => {
+            document.getElementById(id).checked = false;
+        });
+
+        const sym = document.getElementById('detailActions')?.dataset?.symbol;
+        if (sym) {
+            const el = elements.find(e => e.symbol === sym);
+            if (el) renderDetailPanel(el);
+        }
+    });
+}
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Run on load - table is built when DOM is ready
     loadState();
     renderElement();
     loginModal();
     loadWeakElements();
     setupSearch();
     setupFilters();
+    setupStudyMode(); // ✅ add this
     updateProgressUI();
     loadContinueBanner();
     restoreUIState();
-})
+});
