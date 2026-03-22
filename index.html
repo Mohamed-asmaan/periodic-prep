@@ -135,18 +135,19 @@
         </section>
 
         <aside class="sidebar">
-          <div class="progress-container">
-            <div class="progress-header">
-              <span>Progress</span>
-              <span id="progressText">0%</span>
-            </div>
 
+          <div class="progress-section">
+            <div class="progress-header">
+              <span>Need practice</span>
+              <span id="progressText">5 elements</span>
+            </div>
             <div class="progress-bar">
               <div id="progressFill" class="progress-fill"></div>
             </div>
           </div>
+
           <div class="sidebar-inner">
-            
+
 
             <div class="action-buttons">
               <button id="studyModeBtn" class="btn btn-secondary">Study Mode</button>
@@ -182,11 +183,10 @@
         </aside>
       </div>
 
-      <!-- COMPARISON PANEL: Side-by-side compare 2 elements. IDs: comparisonTable, clearComparison, closeComparison -->
+      <!-- Comparison table: full width below periodic table + info card -->
       <section id="comparisonPanel" class="comparison-panel comparison-fullwidth" style="display: none;">
         <h3>Element Comparison</h3>
-        <p class="comparison-hint" id="comparisonHint">1. Click an element in the table → 2. Click "Select to Compare"
-          below → 3. Repeat for second element</p>
+        <p class="comparison-hint" id="comparisonHint">1. Click an element in the table → 2. Click "Select to Compare" below → 3. Repeat for second element</p>
         <div id="comparisonTable" class="comparison-table"></div>
         <div class="comparison-actions">
           <button id="clearComparison" class="btn btn-small">Clear</button>
